@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    // Dono do site: esta conta, com o e-mail confirmado, é sempre admin.
+    function isOwner() {
+      return signedIn() &&
+        request.auth.token.email == 'carlosandre.ad1514@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+    function isAdmin() {
+      return isOwner() || (signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    // Perfis: cada pessoa lê e edita o próprio (sem poder mudar o cargo). Admin lê e edita todos.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.role == 'user';
+      allow update: if isAdmin() ||
+        (signedIn() && request.auth.uid == uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'fav', 'pr', 'last', 'avSignAt']));
+    }
+
+    // Obras e capítulos: leitura pública, escrita só de admin.
+    match /obras/{obraId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /capitulos/{capId} {
+        allow read: if true;
+        allow write: if isAdmin();
+
+        match /comentarios/{comId} {
+          allow read: if true;
+          allow create: if signedIn() &&
+            request.resource.data.uid == request.auth.uid &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() > 0 &&
+            request.resource.data.text.size() <= 500;
+          allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+        }
+      }
+    }
+
+    // Tickets: quem abriu lê os seus; admin lê, resolve e apaga todos.
+    match /tickets/{ticketId} {
+      allow create: if signedIn() &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.status == 'aberto';
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // Contagem de leituras/favoritos: só 1 por pessoa/capítulo/dia (a "marca" só pode ser criada uma vez).
+    function marcaOk() {
+      let mk = request.resource.data.mk;
+      return signedIn() && mk.split('_')[2] == request.auth.uid &&
+        existsAfter(/databases/$(database)/documents/marcas/$(mk)) &&
+        !exists(/databases/$(database)/documents/marcas/$(mk)) &&
+        request.resource.data.n == (resource == null ? 1 : resource.data.n + 1);
+    }
+    match /perfis/{uid} {
+      allow read: if true;
+      allow create, update: if signedIn() && request.auth.uid == uid && request.resource.data.keys().hasOnly(['nome', 'foto']);
+    }
+    match /banners/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /trilhos/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /marcas/{id} { allow create: if signedIn() && id.split('_')[2] == request.auth.uid; }
+    match /leituras/{id} { allow read: if true; allow create, update: if marcaOk(); }
+    match /favs/{id} { allow read: if true; allow create, update: if marcaOk(); }
+    match /leitores/{id} { allow read: if true; allow create, update: if marcaOk() && request.resource.data.uid == request.auth.uid; }
+  }
+}

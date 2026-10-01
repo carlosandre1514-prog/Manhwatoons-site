@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manhwa Toons</title>
+<meta name="description" content="Manhwa Toons: comics e webtoons para ler online.">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Manhwa Toons">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/icons/favicon-64.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&family=Figtree:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#mn">Pular para o conteúdo</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4h4v16H5zM11 4h4v16h-4zM17.5 5l3.5 1-3.5 13-3.5-1z"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+</defs></svg>
+
+<header>
+<div class="logo dp">Manhwa<i>Toons</i></div>
+<nav class="top" id="top" aria-label="Principal"></nav>
+<div class="sp"></div>
+<label class="srch"><svg><use href="#i-search"/></svg><input id="q" placeholder="Buscar obra" aria-label="Buscar obra"></label>
+<button class="ent" id="ent" data-go="login">Entrar</button>
+</header>
+<div id="off" role="status" hidden style="background:var(--seal);color:#fff;text-align:center;padding:8px;font-size:13px">Você está sem internet. Alguns recursos podem não carregar.</div>
+
+<main id="mn" tabindex="-1">
+<section class="v on" id="home">
+<div id="bnr"></div>
+<div class="hero" id="hero">
+<div class="tags" id="hg"></div>
+<h1 id="hh"></h1>
+<p id="hp"></p>
+<div class="btns"><button class="pri" data-go="obra" data-w="0">Ler capítulo 1</button><button class="sec" data-go="obra" data-w="0"><svg><use href="#i-heart"/></svg>Favoritar</button></div>
+</div>
+<h2 style="margin-top:20px">Continue lendo</h2>
+<button class="li" id="cont" data-go="leitor" data-last="1"></button>
+<div class="chips" id="chips"></div>
+<div id="popold"><h2>Populares da semana<a>Ver todas</a></h2>
+<div class="row" id="pop"></div></div>
+<div id="trilhos"></div>
+<h2>Novos capítulos<a>Ver todos</a></h2>
+<div class="list" id="new"></div>
+</section>
+
+<section class="v" id="obra">
+<div class="od">
+<div class="cv" id="oc" aria-hidden="true"></div>
+<div>
+<div class="tags" id="og"></div>
+<h1 id="ot"></h1>
+<p id="os" style="color:var(--mu);max-width:56ch"></p>
+<div class="st" id="ost"></div>
+<div class="btns"><button class="pri" id="ol" data-go="leitor">Começar a ler</button><button class="sec" id="ofv" style="border-color:var(--bd)"></button></div>
+</div>
+</div>
+<h2>Capítulos</h2>
+<div id="caps"></div>
+</section>
+
+<section class="v" id="leitor">
+<div class="bar"><button data-go="obra" aria-label="Voltar" style="display:flex;gap:6px;align-items:center"><svg><use href="#i-back"/></svg><span id="rt"></span></button><span id="rc" style="color:var(--mu);font-size:13px"></span></div>
+<div style="display:flex;gap:8px;max-width:560px;margin:0 auto 10px"><button class="mini on" data-md="r">Rolagem</button><button class="mini" data-md="p">Páginas</button></div>
+<label style="display:flex;gap:10px;align-items:center;max-width:560px;margin:0 auto 10px;color:var(--mu);font-size:13px">Brilho<input type="range" id="br" min="40" max="100" value="100" style="flex:1;accent-color:#00e05c"></label>
+<div class="pn" id="pnl"></div>
+<div id="sent" style="height:1px"></div>
+<div class="nx"><button id="pv">Anterior</button><button id="nxb" style="background:var(--gold);color:#000">Próximo</button></div>
+<div class="cm">
+<div style="display:flex;gap:8px;margin:0 0 12px"><button class="mini" id="rp">Reportar problema</button></div>
+<div class="ok" role="status" id="ro" hidden style="margin-bottom:12px"></div>
+<h2 style="font-size:18px;margin:16px 0 8px">Comentários</h2>
+<div style="display:flex;gap:8px"><input class="fi" id="ci" placeholder="Escreva um comentário" aria-label="Comentário"><button class="pri" id="cs" style="padding:0 16px">Enviar</button></div>
+<div id="cl"></div>
+</div>
+</section>
+
+<section class="v" id="lib">
+<h2 style="margin-top:8px">Sua biblioteca</h2>
+<div class="tabs" id="tabs"><button class="on">Lendo</button><button>Favoritos</button><button>Concluídos</button></div>
+<div class="gr" id="gr"></div>
+</section>
+<section class="v" id="login">
+<form class="au" id="fl" novalidate>
+<h1>Bem-vindo de volta</h1>
+<p class="s">Entre para continuar de onde parou.</p>
+<label>E-mail<input type="email" id="le" placeholder="voce@email.com" autocomplete="email"><span class="er" role="alert" id="lee"></span></label>
+<label>Senha<input type="password" id="lp" placeholder="Sua senha" autocomplete="current-password"><span class="er" role="alert" id="lpe"></span></label>
+<button type="button" class="alt" style="text-align:right;color:var(--mu)" id="fg">Esqueci minha senha</button>
+<button class="pri" type="submit">Entrar</button>
+<p class="alt">Ainda não tem conta? <button type="button" data-go="cadastro">Criar conta</button></p>
+</form>
+</section>
+
+<section class="v" id="cadastro">
+<form class="au" id="fc" novalidate>
+<h1>Crie sua conta</h1>
+<p class="s">Salve favoritos e continue de onde parou em qualquer aparelho.</p>
+<label>Nome de usuário<input type="text" id="cn" placeholder="cavaleiro_estelar" autocomplete="username"><span class="er" role="alert" id="cne"></span></label>
+<label>E-mail<input type="email" id="ce" placeholder="voce@email.com" autocomplete="email"><span class="er" role="alert" id="cee"></span></label>
+<label>Senha<input type="password" id="cp" placeholder="Mínimo de 6 caracteres" autocomplete="new-password"><span class="er" role="alert" id="cpe"></span></label>
+<label>Confirmar senha<input type="password" id="cq" placeholder="Repita a senha" autocomplete="new-password"><span class="er" role="alert" id="cqe"></span></label>
+<label class="ck"><input type="checkbox" id="ct"><span>Li e aceito os <button type="button" class="lk" data-go="termos">termos de uso</button> e a política de privacidade.</span></label>
+<span class="er" role="alert" id="cte"></span>
+<button class="pri" type="submit">Criar conta</button>
+<p class="alt">Já tem conta? <button type="button" data-go="login">Entrar</button></p>
+</form>
+</section>
+<section class="v" id="busca">
+<h2 style="margin-top:8px">Buscar obras</h2>
+<div class="chips" id="bf" style="margin-top:0"></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><label class="sr-only" for="bs">Status</label><select class="fi" id="bs" style="width:auto"><option value="">Todos os status</option><option>Em lançamento</option><option>Completo</option><option>Hiato</option></select><label class="sr-only" for="bo">Ordenar por</label><select class="fi" id="bo" style="width:auto"><option value="u">Mais recentes</option><option value="n">Melhor nota</option><option value="c">Mais capítulos</option><option value="a">A–Z</option></select></div>
+<p class="l" aria-live="polite" id="bc" style="color:var(--mu);font-size:13px;margin:8px 0 12px"></p>
+<div class="gr" id="bg"></div>
+<div class="pgr" id="bp"></div>
+</section>
+
+<section class="v" id="perfil">
+<div class="pf"><div class="av" id="pa">?</div><div><h1 style="font-size:26px;font-weight:800" id="pn">Visitante</h1><span style="color:var(--mu);font-size:14px" id="pe">Entre para salvar seu progresso</span></div></div>
+<div class="sts"><div><b id="s1">0</b>obras lidas</div><div><b id="sfv">3</b>favoritos</div><div><b id="s2">0</b>capítulos alcançados</div><div><b id="s3">—</b>membro desde</div></div>
+<button class="ch" data-go="lib" data-i="2"><span>Meus favoritos</span><small id="pfn">3</small></button>
+<label class="ch" style="cursor:pointer"><span>Avisar de novos capítulos</span><input type="checkbox" checked style="accent-color:#00e05c;width:18px;height:18px"></label>
+<button class="ch" data-go="suporte"><span>Ajuda e suporte</span><small>Abrir ticket</small></button>
+<button class="ch" id="radm" hidden data-go="adm"><span>Painel ADM</span><small>Somente admins</small></button>
+<button class="ch" id="sair" style="color:var(--seal)"><span>Sair da conta</span></button>
+</section>
+
+<section class="v" id="suporte">
+<form class="au" id="fs" novalidate>
+<h1>Ajuda e suporte</h1>
+<p class="s">Conte o que aconteceu e a equipe responde por e-mail.</p>
+<label>Assunto<select class="fi" id="sa"><option>Erro em capítulo</option><option>Conta e login</option><option>Sugestão</option><option>Outro</option></select></label>
+<label>Mensagem<textarea class="fi" id="sm" rows="4" placeholder="Descreva o problema"></textarea><span class="er" role="alert" id="sme"></span></label>
+<button class="pri" type="submit">Enviar ticket</button>
+<h2 style="font-size:18px;margin:12px 0 0">Seus tickets</h2>
+<div id="sl"></div>
+</form>
+</section>
+
+<section class="v" id="adm">
+<h2 style="margin-top:8px">Painel ADM</h2>
+<div class="sts" id="ast"></div>
+<div class="tabs" id="at"><button class="on">Obras</button><button>Capítulos</button><button>Tickets</button><button>Usuários</button></div>
+<div class="list" id="al" style="grid-template-columns:1fr"></div>
+</section>
+<section class="v" id="recuperar">
+<form class="au" id="fr" novalidate>
+<h1>Recuperar senha</h1>
+<p class="s">Digite seu e-mail e enviamos um link para criar uma nova senha.</p>
+<label>E-mail<input type="email" id="rem" placeholder="voce@email.com" autocomplete="email"><span class="er" role="alert" id="reme"></span></label>
+<div class="ok" role="status" id="rok" hidden></div>
+<button class="pri" type="submit">Enviar link</button>
+<p class="alt">Lembrou? <button type="button" data-go="login">Entrar</button></p>
+</form>
+</section>
+
+<section class="v" id="termos">
+<div class="au" style="max-width:640px">
+<h1>Termos de uso e privacidade</h1>
+<p class="s">Última atualização: 30 de setembro de 2026. Texto-modelo: revise antes de publicar.</p>
+<h2 style="font-size:18px;margin:8px 0 0">1. Uso do serviço</h2>
+<p class="s">O Manhwa Toons é uma plataforma de leitura. Você concorda em usar o site apenas para ler, favoritar e comentar obras disponíveis.</p>
+<h2 style="font-size:18px;margin:8px 0 0">2. Sua conta</h2>
+<p class="s">Você é responsável pela segurança da sua senha e pelas atividades feitas na sua conta.</p>
+<h2 style="font-size:18px;margin:8px 0 0">3. Comentários</h2>
+<p class="s">Não são permitidos ofensas, spam ou conteúdo ilegal. Comentários que violem essas regras podem ser removidos.</p>
+<h2 style="font-size:18px;margin:8px 0 0">4. Direitos autorais</h2>
+<p class="s">As obras pertencem aos seus autores. Envie apenas conteúdo que você tem autorização para publicar.</p>
+<h2 style="font-size:18px;margin:8px 0 0">5. Privacidade</h2>
+<p class="s">Guardamos apenas os dados necessários: e-mail, nome de usuário, favoritos e progresso de leitura. Não vendemos seus dados.</p>
+<button class="pri" data-go="cadastro">Voltar ao cadastro</button>
+</div>
+</section>
+
+<section class="v" id="aform">
+<form class="au" id="ff" novalidate>
+<h1 id="fh"></h1>
+<div id="fo" style="display:grid;gap:14px">
+<label>Título<input class="fi" type="text" id="ft" placeholder="Nome da obra"></label>
+<label>Gênero<select class="fi" id="fgn"><option>Fantasia</option><option>Ação</option><option>Aventura</option><option>Drama</option><option>Romance</option><option>Terror</option></select></label>
+<label>Status<select class="fi" id="fst"><option>Em lançamento</option><option>Completo</option><option>Hiato</option></select></label>
+<label>Sinopse<textarea class="fi" id="fsy" rows="3" placeholder="Sobre o que é a obra"></textarea></label>
+<label>Capa (imagem até 5 MB)<input class="fi" type="file" id="fcv" accept="image/*"></label>
+</div>
+<div id="fk" style="display:grid;gap:14px" hidden>
+<label>Obra<select class="fi" id="fw"></select></label>
+<label>Número do capítulo<input class="fi" type="text" inputmode="decimal" id="fn" placeholder="Ex.: 0, 1, 1.5, 121"></label>
+<label>Páginas (até 20 imagens de 5 MB)<input class="fi" type="file" id="fpg" accept="image/*" multiple></label>
+</div>
+<div class="gr" id="fp" style="grid-template-columns:repeat(3,1fr);gap:8px"></div>
+<span class="er" role="alert" id="fe"></span>
+<button class="pri" type="submit">Salvar</button>
+<button type="button" class="alt" data-go="adm" style="color:var(--mu)">Cancelar</button>
+</form>
+</section>
+
+<section class="v" id="erro">
+<div class="emp" style="margin-top:40px"><b id="et">Algo deu errado</b><span id="em"></span><div style="display:flex;gap:8px;justify-content:center;margin-top:16px"><button class="pri" id="etry">Tentar de novo</button><button class="mini" data-go="home" style="padding:0 14px">Ir para o início</button></div></div>
+</section>
+</main>
+<footer><button data-go="termos">Termos de uso</button><button data-go="termos">Privacidade</button><button data-go="suporte">Ajuda</button><span>© 2026 Manhwa Toons</span></footer>
+
+<nav class="bot" id="bot" aria-label="Menu principal"></nav>
+
+<noscript>Ative o JavaScript para usar o Manhwa Toons.</noscript>
+<script src="js/app.js"></script>
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/extras.js"></script>
+</body>
+</html>
