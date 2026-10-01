@@ -35,6 +35,9 @@ var VS=["home","obra","leitor","lib","busca","perfil","suporte","adm","login","c
 function ld(){try{return JSON.parse(localStorage.getItem("mt"))||{}}catch(e){return {}}}
 function sv(o){try{localStorage.setItem("mt",JSON.stringify(o))}catch(e){}}
 var P=ld();P.fav=[];P.last={w:-1,c:1};P.pr={};
+var TS=[],LM=0;
+function ago(t){if(!t)return"";var s=Math.max(0,Math.floor((Date.now()-t)/1e3));if(s<60)return"agora";var m=Math.floor(s/60);if(m<60)return"há "+m+" min";var h=Math.floor(m/60);if(h<24)return"há "+h+" h";var d=Math.floor(h/24);if(d<7)return"há "+d+(d===1?" dia":" dias");var w=Math.floor(d/7);if(d<30)return"há "+w+(w===1?" semana":" semanas");var o=Math.floor(d/30);if(d<365)return"há "+o+(o===1?" mês":" meses");var y=Math.floor(d/365);return"há "+y+(y===1?" ano":" anos")}
+setInterval(function(){[].forEach.call(document.querySelectorAll(".ago"),function(e){e.textContent=ago(+e.dataset.ts)})},15000);
 function V(){return W.map(function(w,i){return i}).filter(function(i){return !W[i][4]})}
 function isA(){return S.email==="admin@toons.com"}
 function cv(w,x){return '<div class="cv" style="--g:'+w[1]+';--x:'+(x*14-30)+'px" aria-hidden="true"><b>'+esc(w[0])+'</b></div>'}
@@ -45,12 +48,12 @@ if((v==="adm"||v==="aform")&&!isA())return fail("Acesso restrito","Só administr
 if(v==="leitor"&&!navigator.onLine)return fail("Sem conexão","Verifique sua internet e tente de novo.");
 document.querySelectorAll(".v").forEach(function(x){x.classList.toggle("on",x.id===v)});
 var k=v==="lib"?(i||1):0;if(v==="login"||v==="cadastro"||v==="busca"||v==="erro"||v==="termos"||v==="recuperar")k=-1;if(v==="perfil"||v==="adm"||v==="suporte")k=3;
-if(v==="lib")tab(i==2?1:0);if(v==="home")home();if(v==="obra")ob();if(v==="leitor")rl();if(v==="adm")ar();if(v==="perfil")$("radm").hidden=!isA();
+if(v==="lib"){LM=i==2?1:0;tab(LM?1:0)}if(v==="home")home();if(v==="obra")ob();if(v==="leitor")rl();if(v==="adm")ar();if(v==="perfil")$("radm").hidden=!isA();
 document.querySelectorAll("#top button,#bot button").forEach(function(b){var on=+b.dataset.i===k;b.classList.toggle("on",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});window.scrollTo(0,0);ap();if(fs0)fs0=0;else $("mn").focus({preventScroll:true})}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-go],[data-cap]");if(!b)return;var d=b.dataset;if(d.w!==undefined)S.cur=+d.w;if(d.cap!==undefined)S.cap=+d.cap;if(d.last){S.cur=P.last.w;S.cap=P.last.c}S.pg=0;go(d.go||"leitor",d.i)});
 function home(){var v=V();
 $("pop").innerHTML=v.slice(0,12).map(function(i,r){var w=W[i];return '<button class="card" data-go="obra" data-w="'+i+'"><div style="position:relative"><span class="rk">'+(r+1)+'</span>'+cv(w,i)+'</div><div class="nm">'+esc(w[0])+'</div><div class="m"><svg><use href="#i-star"/></svg>'+w[2]+'</div></button>'}).join("");
-$("new").innerHTML=v.slice(0,NC()).map(function(i,r){var w=W[i];return '<button class="li" data-go="leitor" data-w="'+i+'" data-cap="'+Math.max(1,w[3])+'">'+cv(w,i)+'<div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+lb(i,Math.max(1,w[3]))+' · há '+(r+1)+'h</span></div>'+(r<2?'<span class="new">Novo</span>':'')+'</button>'}).join("");
+$("new").innerHTML=v.slice(0,NC()).map(function(i,r){var w=W[i];return '<button class="li" data-go="leitor" data-w="'+i+'" data-cap="'+Math.max(1,w[3])+'">'+cv(w,i)+'<div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+lb(i,Math.max(1,w[3]))+' · <span class="ago" data-ts="'+(TS[i]||0)+'">'+ago(TS[i])+'</span></span></div>'+(TS[i]&&Date.now()-TS[i]<864e5?'<span class="new">Novo</span>':'')+'</button>'}).join("");
 var l=P.last,w=W[l.w],c=$("cont");c.hidden=!w||!!w[4];if(!c.hidden)c.innerHTML='<div class="cv" style="--g:'+w[1]+'"></div><div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+l.c+' · '+Math.min(100,Math.round(l.c/Math.max(1,w[3])*100))+'% lido</span><div class="pg"><i style="width:'+Math.min(100,Math.round(l.c/Math.max(1,w[3])*100))+'%"></i></div></div><svg><use href="#i-play"/></svg>'}
 function ob(){var i=S.cur,w=W[i];if(!w||w[4])return fail("Obra não encontrada","Essa obra foi removida.");
 $("oc").style.setProperty("--g",w[1]);$("oc").innerHTML='<b>'+esc(w[0])+'</b>';$("og").innerHTML='<span class="tag">'+esc(G[i])+'</span><span class="tag">'+ST[i]+'</span>';$("ot").textContent=w[0];$("os").textContent=SY[i]||"Sem sinopse ainda.";
@@ -87,8 +90,11 @@ $("bg").innerHTML=L.length?L.slice(BP*PS,BP*PS+PS).map(function(i){return cd(i)}
 $("bc").textContent=L.length+(L.length===1?" resultado":" resultados");
 $("bp").innerHTML=pgs>1?'<button class="mini" id="bpp"'+(BP?'':' disabled')+'>Anterior</button><span>Página '+(BP+1)+' de '+pgs+'</span><button class="mini" id="bpn"'+(BP<pgs-1?'':' disabled')+'>Próxima</button>':''}
 $("bf").innerHTML=["Todos","Lançamentos","Fantasia","Ação","Aventura","Drama"].map(function(c,i){return '<button class="'+(i?'':'on')+'">'+c+'</button>'}).join("");
-function tab(n){[].forEach.call($("tabs").children,function(b,i){b.classList.toggle("on",i===n)});var v=V(),fv=P.fav.filter(function(i){return v.indexOf(i)>-1}),pc=function(i){return Math.min(100,Math.round((P.pr[i]||0)/Math.max(1,W[i][3])*100))};
-$("gr").innerHTML=n===0?v.map(function(i){return cd(i,pc(i))}).join(""):n===1?(fv.length?fv.map(function(i){return cd(i,pc(i))}).join(""):'<div class="emp" style="grid-column:1/-1"><b>Nenhum favorito ainda</b>Toque no coração de uma obra para salvar aqui.</div>'):'<div class="emp" style="grid-column:1/-1"><b>Nada concluído ainda</b>Termine uma obra e ela aparece aqui.</div>';
+function tab(n){var t=$("tabs");t.style.display=LM?"":"none";document.querySelector("#lib h2").textContent=LM?"Favoritos":"Biblioteca";[].forEach.call(t.children,function(b,i){b.classList.toggle("on",i===n)});
+var v=V(),fv=P.fav.filter(function(i){return v.indexOf(i)>-1}),pc=function(i){return Math.min(100,Math.round((P.pr[i]||0)/Math.max(1,W[i][3])*100))};
+var rd=v.filter(function(i){return(P.pr[i]||0)>0&&pc(i)<100}),dn=v.filter(function(i){return W[i][3]>0&&pc(i)>=100});
+var em=function(b,m){return'<div class="emp" style="grid-column:1/-1"><b>'+b+'</b>'+m+'</div>'},L=function(a,e){return a.length?a.map(function(i){return cd(i,pc(i))}).join(""):e};
+$("gr").innerHTML=!LM?L(v,em("Nenhuma obra ainda","As obras publicadas aparecem aqui.")):n===0?L(rd,em("Nada em leitura","Comece a ler uma obra e ela aparece aqui.")):n===1?L(fv,em("Nenhum favorito ainda","Toque no coração de uma obra para salvar aqui.")):L(dn,em("Nada concluído ainda","Termine uma obra e ela aparece aqui."));
 $("sfv").textContent=fv.length;$("pfn").textContent=fv.length}
 function logged(n,m){var b=$("ent");b.textContent=n;b.dataset.go="perfil";b.removeAttribute("data-i");S.email=(m||"").trim().toLowerCase();$("pn").textContent=n;$("pa").textContent=n.charAt(0).toUpperCase();$("pe").textContent=m}
 $("sair").onclick=function(){var b=$("ent");b.textContent="Entrar";b.dataset.go="login";S.email="";$("pn").textContent="Visitante";$("pa").textContent="?";$("pe").textContent="Entre para salvar seu progresso";go("login")};
