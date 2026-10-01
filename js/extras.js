@@ -1,7 +1,7 @@
 // Banners, trilhos da home, rankings, foto de perfil. Usa o mesmo Firebase do firebase.js.
 import {getApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,deleteDoc,writeBatch,query,where,orderBy,increment} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,deleteDoc,writeBatch,query,where,orderBy,limit,increment,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {SIGNER_URL} from "./config.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -18,12 +18,12 @@ document.head.append(st);
 
 /* ---------- envio de imagem (ImageKit) ---------- */
 async function upl(folder,name,f,scope){
-  if(!/^image\//.test(f.type))throw new Error("so_imagens");if(f.size>5242880)throw new Error("maximo_5mb");
-  const t=await auth.currentUser.getIdToken(),a=await fetch(SIGNER_URL+(scope?"?scope="+scope:""),{headers:{Authorization:"Bearer "+t}}),k=await a.json().catch(()=>({}));
+  const ty=f.type||({jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",webp:"image/webp",gif:"image/gif"})[(f.name.split(".").pop()||"").toLowerCase()]||"";if(!/^image\//.test(ty))throw new Error("so_imagens");if(f.size>5242880)throw new Error("maximo_5mb");
+  const t=await auth.currentUser.getIdToken(),a=await fetch(SIGNER_URL+(scope?"?scope="+scope:""),{headers:{Authorization:"Bearer "+t},signal:AbortSignal.timeout(30000)}),k=await a.json().catch(()=>({}));
   if(!a.ok||!k.signature)throw new Error(k.error||"assinatura_"+a.status);
   const fd=new FormData();fd.append("file",f);fd.append("fileName",name);fd.append("folder","/"+folder);fd.append("useUniqueFileName","false");
   fd.append("publicKey",k.publicKey);fd.append("signature",k.signature);fd.append("expire",k.expire);fd.append("token",k.token);
-  const r=await fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body:fd}),j=await r.json().catch(()=>({}));
+  const r=await fetch("https://upload.imagekit.io/api/v1/files/upload",{method:"POST",body:fd,signal:AbortSignal.timeout(90000)}),j=await r.json().catch(()=>({}));
   if(!r.ok||!j.url)throw new Error(j.message||"upload_"+r.status);return j.url}
 
 /* ---------- foto de perfil ---------- */
@@ -61,7 +61,8 @@ async function renderHome(){if(busy||!$$("trilhos")||!WID.length)return;busy=1;
   try{const [tr,bs]=await Promise.all([getDocs(query(collection(db,"trilhos"),orderBy("ordem"))),getDocs(query(collection(db,"banners"),orderBy("ordem")))]);
     $$("popold").hidden=!tr.empty;$$("trilhos").innerHTML=(await Promise.all(tr.docs.map(d=>trilho(d.data())))).join("");
     const B=bs.docs.map(d=>d.data()),bn=$$("bnr");bn.classList.toggle("on",!!B.length);$$("hero").style.display=B.length?"none":"";
-    const sl=b=>{const i=WID.indexOf(b.obraId);return `<button ${i>-1?`data-go="obra" data-w="${i}"`:""} aria-label="Destaque" style="background-image:url('${E(b.img)}')"></button>`};
+    const capa=i=>i>-1&&W[i]?((W[i][1].match(/url\(['"]?(.*?)['"]?\)/)||[])[1]||""):"";
+    const sl=b=>{const i=WID.indexOf(b.obraId),im=b.usaCapa?capa(i):b.img;return `<button ${i>-1?`data-go="obra" data-w="${i}"`:""} aria-label="Destaque" style="background-image:url('${E(im||"")}');${b.usaCapa?"background-position:center 20%":""}"></button>`};
     const L=B.length>1?[B[B.length-1],...B,B[0]]:B;
     bn.innerHTML=B.length?`<div class="bn">${L.map(sl).join("")}</div>`:"";
     clearInterval(window._bt);const x=bn.firstElementChild;
@@ -75,18 +76,29 @@ const h0=window.home;window.home=function(){h0();renderHome()};setTimeout(()=>{O
 
 /* ---------- painel: banners e trilhos ---------- */
 const sec=document.createElement("section");sec.className="v";sec.id="adm2";$$("adm").after(sec);
-const ab=Object.assign(document.createElement("button"),{className:"pri",textContent:"Home: banners e trilhos"});ab.style.cssText="justify-self:start;margin:8px 0;padding:9px 16px";
+const ab=Object.assign(document.createElement("button"),{className:"pri",textContent:"Home e chat: banners, trilhos e avisos"});ab.style.cssText="justify-self:start;margin:8px 0;padding:9px 16px";
 ab.onclick=()=>{if(!isA())return;go("adm2");painel()};$$("ast").before(ab);
 async function painel(){
   const [b,t]=await Promise.all([getDocs(query(collection(db,"banners"),orderBy("ordem"))),getDocs(query(collection(db,"trilhos"),orderBy("ordem")))]);
   const li=(c,d,txt,img)=>`<div class="li"><div class="t"><b>${E(txt)}</b></div><div class="act"><button class="mini" data-m="${c}|${d.id}|-1">↑</button><button class="mini" data-m="${c}|${d.id}|1">↓</button><button class="mini" data-x="${c}|${d.id}">Excluir</button></div></div>`;
-  sec.innerHTML=`<h2 style="margin-top:8px">Banners do carrossel</h2><div class="list" style="grid-template-columns:1fr">${b.docs.map(d=>li("banners",d,"Banner · "+(WID.indexOf(d.data().obraId)>-1?W[WID.indexOf(d.data().obraId)][0]:"sem link"))).join("")||'<p style="color:var(--mu)">Nenhum banner.</p>'}</div>
-  <div class="bx"><label>Imagem (até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><label>Abre a obra (opcional)<select class="fi" id="bo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><button class="pri" id="bs">Adicionar banner</button><div class="ae" id="ae1"></div></div>
+  sec.innerHTML=`<h2 style="margin-top:8px">Banners do carrossel</h2><div class="list" style="grid-template-columns:1fr">${b.docs.map(d=>li("banners",d,"Banner · "+(WID.indexOf(d.data().obraId)>-1?W[WID.indexOf(d.data().obraId)][0]:"sem link")+(d.data().usaCapa?" · capa da obra":" · imagem"))).join("")||'<p style="color:var(--mu)">Nenhum banner.</p>'}</div>
+  <div class="bx"><label>Obra<select class="fi" id="bo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><label>Imagem do banner<select class="fi" id="bm"><option value="capa">Usar a capa da obra</option><option value="img">Enviar uma imagem de banner</option></select></label><label id="bf" style="display:none">Imagem (até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><button class="pri" id="bs">Adicionar banner</button><div class="ae" id="ae1"></div></div>
   <h2>Trilhos da home</h2><div class="list" style="grid-template-columns:1fr">${t.docs.map(d=>li("trilhos",d,d.data().nome+" · "+TIPOS[d.data().tipo])).join("")||'<p style="color:var(--mu)">Nenhum trilho. A home mostra "Populares da semana" até você criar o primeiro.</p>'}</div>
-  <div class="bx"><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label><button class="pri" id="ts">Criar trilho</button><div class="ae" id="ae2"></div></div>`;
+  <div class="bx"><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label><button class="pri" id="ts">Criar trilho</button><div class="ae" id="ae2"></div></div>
+  <h2>Chat da comunidade</h2><div class="bx"><label>Aviso fixado no chat<textarea class="fi" id="av" rows="3" maxlength="500" placeholder="Escreva o aviso…"></textarea></label><button class="pri" id="avs">Enviar aviso</button><button class="mini" id="chr" style="color:#ff6b81;justify-self:start">Apagar todas as mensagens do chat</button><div class="ae" id="ae3"></div></div>`;
   let en=1;const er=m=>{const x=$$("ae"+en);if(x)x.textContent=m;else alert(m)},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
-  $$("bs").onclick=async e=>{en=1;const f=$$("bi").files[0];if(b.size>=7)return er("Máximo de 7 banners. Exclua um para adicionar outro.");if(!f)return er("Escolha a imagem do banner.");e.target.disabled=true;er("");
-    try{const img=await upl("banners","b-"+Date.now(),f);await addDoc(collection(db,"banners"),{img,obraId:$$("bo").value,ordem:prox(b)});delete window._bt;painel();renderHome()}catch(x){er("Erro: "+x.message);e.target.disabled=false}};
+  $$("bm").onchange=()=>{$$("bf").style.display=$$("bm").value==="img"?"":"none"};
+  $$("bs").onclick=async e=>{en=1;const bt=e.target,modo=$$("bm").value,o=$$("bo").value,f=$$("bi").files[0];er("");
+    if(b.size>=7)return er("Máximo de 7 banners. Exclua um para adicionar outro.");
+    if(modo==="capa"&&!o)return er("Escolha a obra para usar a capa dela.");
+    if(modo==="img"&&!f)return er("Escolha a imagem do banner.");
+    bt.disabled=true;bt.textContent="Enviando…";
+    try{let img="";if(modo==="img")img=await upl("banners","b-"+Date.now(),f);await addDoc(collection(db,"banners"),{img,obraId:o,usaCapa:modo==="capa",ordem:prox(b)});painel();renderHome()}
+    catch(x){const m="Não foi possível adicionar o banner: "+(x.code||x.name||x.message);er(m);alert(m);bt.disabled=false;bt.textContent="Adicionar banner"}};
+  $$("avs").onclick=async()=>{en=3;const t=$$("av").value.trim();er("");if(t.length<2)return er("Escreva o aviso.");
+    try{const u=auth.currentUser;await addDoc(collection(db,"chat"),{uid:u.uid,nome:(u.displayName||"Administração").slice(0,40),foto:FOTO,texto:t.slice(0,500),tipo:"aviso",criado:serverTimestamp()});$$("av").value="";er("Aviso enviado e fixado no chat.")}catch(x){er("Não foi possível enviar: "+(x.code||x.message))}};
+  $$("chr").onclick=async()=>{en=3;if(!confirm("Apagar TODAS as mensagens e avisos do chat? Isso não pode ser desfeito."))return;er("Apagando…");
+    try{let n=0;for(;;){const q=await getDocs(query(collection(db,"chat"),limit(100)));if(q.empty)break;const w=writeBatch(db);q.docs.forEach(d=>w.delete(d.ref));await w.commit();n+=q.size}er("Chat limpo: "+n+" mensagens apagadas.")}catch(x){er("Não foi possível apagar: "+(x.code||x.message))}};
   $$("ts").onclick=async()=>{en=2;const n=$$("tn").value.trim();if(n.length<2)return er("Dê um nome ao trilho.");
     try{await addDoc(collection(db,"trilhos"),{nome:n,tipo:$$("tt").value,ordem:prox(t)});painel();renderHome()}catch(x){er("Erro: "+(x.code||x.message))}};
   sec.onclick=async e=>{en=1;const d=e.target.dataset;try{
