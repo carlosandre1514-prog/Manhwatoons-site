@@ -19,7 +19,7 @@ const st=document.createElement("style");st.textContent=`
 .ch-i{flex:1;min-width:0;background:#0e0e0e;border:1px solid #262626;border-radius:999px;color:#f4f4f4;padding:12px 16px;font:inherit;font-size:16px}
 .ch-s{flex:none;border:0;border-radius:999px;background:#00e05c;color:#000;font:inherit;font-weight:800;padding:0 22px;min-height:44px;cursor:pointer}
 .ch-e{color:#ff6b81;font-size:13px;min-height:16px;margin-top:4px}
-.ch-v{color:#b3b3b3;text-align:center;margin:auto}`;
+body.chatting footer{display:none}body.kb .bot{display:none}.ch-v{color:#b3b3b3;text-align:center;margin:auto}`;
 document.head.append(st);
 
 const btn=Object.assign(document.createElement("button"),{id:"chb",title:"Chat da comunidade"});btn.setAttribute("aria-label","Chat da comunidade");
@@ -30,14 +30,17 @@ const sec=document.createElement("section");sec.className="v";sec.id="chat";$$("
 sec.innerHTML='<h2 class="ch-t">Comunidade</h2><div class="ch-l" id="chl"></div><form class="ch-f" id="chf"><input class="ch-i" id="chi" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem…"><button class="ch-s" type="submit">Enviar</button></form><div class="ch-e" id="che"></div>';
 let un=null,foto="",ult=0;
 const hora=t=>t?t.toDate().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"}):"";
-function fit(){if(!sec.classList.contains("on"))return;const b=$$("bot"),bh=b&&getComputedStyle(b).display!=="none"?b.offsetHeight:0,top=sec.getBoundingClientRect().top+scrollY;sec.style.height=Math.max(320,innerHeight-top-bh-12)+"px"}
-addEventListener("resize",fit);
+const vv=()=>window.visualViewport?visualViewport.height:innerHeight;
+function fit(){if(!sec.classList.contains("on"))return;const b=$$("bot"),bh=b&&getComputedStyle(b).display!=="none"?b.offsetHeight:0,top=sec.getBoundingClientRect().top+scrollY;sec.style.height=Math.max(240,vv()-top-bh-8)+"px";if(document.body.classList.contains("kb"))scrollTo(0,0)}
+addEventListener("resize",fit);if(window.visualViewport)visualViewport.addEventListener("resize",fit);
+$$("chi").addEventListener("focus",()=>{document.body.classList.add("kb");setTimeout(fit,60);setTimeout(fit,400)});
+$$("chi").addEventListener("blur",()=>{document.body.classList.remove("kb");setTimeout(fit,60)});
 function ouvir(){if(un)return;
   un=onSnapshot(query(collection(db,"chat"),orderBy("criado","desc"),limit(60)),s=>{const box=$$("chl"),me=auth.currentUser&&auth.currentUser.uid,adm=window.isA&&isA();
     box.innerHTML=s.docs.map(d=>{const x=d.data({serverTimestamps:"estimate"}),mine=x.uid===me,nm=x.nome||"Leitor";
       return `<div class="ch-m${mine?" me":""}"><div class="ch-av"${x.foto?` style="background-image:url('${E(x.foto)}')"`:""}>${x.foto?"":E(nm[0].toUpperCase())}</div><div class="ch-bb"><div class="ch-nm">${E(nm)}<span class="ch-tm">${hora(x.criado)}</span>${mine||adm?`<button class="ch-x" data-d="${d.id}" aria-label="Apagar">✕</button>`:""}</div>${E(x.texto)}${mine?`<button class="ch-x" data-d="${d.id}" aria-label="Apagar">✕</button>`:""}</div></div>`}).reverse().join("")||'<p class="ch-v">Nenhuma mensagem ainda. Comece a conversa!</p>';
     box.scrollTop=box.scrollHeight},()=>{$$("che").textContent="Não foi possível carregar o chat."})}
-new MutationObserver(()=>{if(sec.classList.contains("on")){scrollTo(0,0);fit();ouvir()}else if(un){un();un=null}}).observe(sec,{attributes:true,attributeFilter:["class"]});
+new MutationObserver(()=>{const on=sec.classList.contains("on");document.body.classList.toggle("chatting",on);if(on){scrollTo(0,0);fit();ouvir()}else{document.body.classList.remove("kb");if(un){un();un=null}}}).observe(sec,{attributes:true,attributeFilter:["class"]});
 onAuthStateChanged(auth,async u=>{$$("chi").placeholder=u?"Escreva uma mensagem…":"Entre para participar do chat";foto="";
   if(u){const s=await getDoc(doc(db,"perfis",u.uid)).catch(()=>null);foto=s&&s.exists()?s.data().foto||"":""}});
 $$("chf").onsubmit=async e=>{e.preventDefault();const u=auth.currentUser,t=$$("chi").value.trim(),er=$$("che");er.textContent="";
