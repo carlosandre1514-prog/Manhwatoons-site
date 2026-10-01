@@ -6,7 +6,7 @@ import {SIGNER_URL} from "./config.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dia=(n=0)=>new Date(Date.now()-n*864e5).toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"});
-const VER="v8";
+const VER="v11";
 const TIPOS={obras:"Obras que eu escolher",populares:"Obras populares da semana",lidas_dia:"Obras mais lidas do dia",favs_semana:"Mais favoritos da semana",leitores_dia:"Ranking de leitores do dia"};
 let FOTO="";
 const st=document.createElement("style");st.textContent=`#bnr{display:none;margin:0 0 14px}#bnr.on{display:block}
@@ -60,7 +60,8 @@ async function trilho(t){let h=`<h2>${E(t.nome)}</h2>`;
   let L=WID.map((id,i)=>[i,m[id]||0]).filter(x=>!W[x[0]][4]).sort((a,b)=>b[1]-a[1]);if(L.some(x=>x[1]>0))L=L.filter(x=>x[1]>0);
   return h+`<div class="row">${L.slice(0,10).map((x,r)=>card(x[0],r,x[1]?x[1]+" "+un:"—")).join("")}</div>`}
 let busy=0;
-async function renderHome(){if(busy||!$$("trilhos")||!WID.length)return;busy=1;
+let last=0;
+async function renderHome(f){if(busy||!$$("trilhos")||!window.WID||!WID.length||(!f&&Date.now()-last<20000))return;busy=1;last=Date.now();if(f)Object.keys(cache).forEach(k=>delete cache[k]);
   try{const [tr,bs]=await Promise.all([getDocs(query(collection(db,"trilhos"),orderBy("ordem"))),getDocs(query(collection(db,"banners"),orderBy("ordem")))]);
     $$("popold").hidden=!tr.empty;$$("trilhos").innerHTML=(await Promise.all(tr.docs.map(d=>trilho(d.data())))).join("");
     const B=bs.docs.map(d=>d.data()),bn=$$("bnr");bn.classList.toggle("on",!!B.length);$$("hero").style.display=B.length?"none":"";
@@ -74,9 +75,12 @@ async function renderHome(){if(busy||!$$("trilhos")||!WID.length)return;busy=1;
       dots[0].classList.add("a");dots.forEach((d,k)=>d.onclick=()=>x.scrollTo({left:(k+1)*w(),behavior:"smooth"}));
       x.addEventListener("scroll",()=>{mark();clearTimeout(tm);tm=setTimeout(()=>{if(!w())return;const i=Math.round(x.scrollLeft/w());if(i<=0)pula(B.length);else if(i>=B.length+1)pula(1)},120)});
       x.addEventListener("touchstart",()=>tc=1);x.addEventListener("touchend",()=>setTimeout(()=>tc=0,4000));
+      if(w()){pula(1);ok=1;mark()}
       window._bt=setInterval(()=>{if(tc||!w()||!$$("home").classList.contains("on"))return;if(!ok){ok=1;pula(1);mark();return}x.scrollTo({left:(Math.round(x.scrollLeft/w())+1)*w(),behavior:"smooth"})},4000)}}
   catch(e){}busy=0}
-const h0=window.home;window.home=function(){h0();renderHome()};setTimeout(()=>{Object.keys(cache).forEach(k=>delete cache[k]);renderHome()},1500);
+const h0=window.home;window.home=function(){h0();renderHome()};
+const t0=setInterval(()=>{if(window.WID&&WID.length){clearInterval(t0);renderHome()}},400);setTimeout(()=>clearInterval(t0),40000);
+const g0=window.go;window.go=function(v,i){const r=g0(v,i);if(v==="home")renderHome();return r};
 
 /* ---------- painel: banners e trilhos ---------- */
 const sec=document.createElement("section");sec.className="v";sec.id="adm2";$$("adm").after(sec);
@@ -86,18 +90,16 @@ async function painel(){
   const [b,t]=await Promise.all([getDocs(query(collection(db,"banners"),orderBy("ordem"))),getDocs(query(collection(db,"trilhos"),orderBy("ordem")))]);
   const li=(c,d,txt,ex="")=>`<div class="li"><div class="t"><b>${E(txt)}</b></div><div class="act"><button class="mini" data-m="${c}|${d.id}|-1">↑</button><button class="mini" data-m="${c}|${d.id}|1">↓</button>${ex}<button class="mini" data-x="${c}|${d.id}">Excluir</button></div></div>`;
   sec.innerHTML=`<h2 style="margin-top:8px">Banners do carrossel <small style="color:var(--mu);font-size:12px;font-weight:400">· painel ${VER}</small></h2><div class="list" style="grid-template-columns:1fr">${b.docs.map(d=>li("banners",d,"Banner · "+(WID.indexOf(d.data().obraId)>-1?W[WID.indexOf(d.data().obraId)][0]:"sem link")+(d.data().usaCapa?" · capa da obra":" · imagem"))).join("")||'<p style="color:var(--mu)">Nenhum banner.</p>'}</div>
-  <div class="bx"><label>Obra<select class="fi" id="bo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><label>Imagem do banner<select class="fi" id="bm"><option value="capa">Usar a capa da obra</option><option value="img">Enviar uma imagem de banner</option></select></label><label id="bf" style="display:none">Imagem (até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><button class="pri" id="bs">Adicionar banner</button><div class="ae" id="ae1"></div></div>
+  <div class="bx"><label>Obra do banner<select class="fi" id="xbo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><label>Imagem do banner (opcional, até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><div style="color:var(--mu);font-size:13px">Sem imagem, o banner usa a capa da obra escolhida.</div><button class="pri" id="xbs">Adicionar banner</button><div class="ae" id="ae1"></div></div>
   <h2>Trilhos da home</h2><div class="list" style="grid-template-columns:1fr">${t.docs.map(d=>li("trilhos",d,d.data().nome+" · "+(TIPOS[d.data().tipo]||"")+(d.data().tipo==="obras"?" ("+(d.data().obras||[]).length+")":""),`<button class="mini" data-e="${d.id}">Editar</button>`)).join("")||'<p style="color:var(--mu)">Nenhum trilho. A home mostra "Populares da semana" até você criar o primeiro.</p>'}</div>
   <div class="bx"><b id="tfh">Novo trilho</b><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt"><option value="obras">Obras que eu escolher</option><option value="leitores_dia">Ranking de leitores do dia</option></select></label><div id="tob"><div style="color:var(--mu);font-size:14px;margin-bottom:4px">Marque as obras (aparecem na ordem em que você marcar):</div>${WID.map((id,i)=>`<label class="ck"><input type="checkbox" value="${id}"> ${E(W[i][0])}</label>`).join("")}</div><button class="pri" id="ts">Criar trilho</button><button class="mini" id="tc" style="display:none;justify-self:start">Cancelar edição</button><div class="ae" id="ae2"></div></div>
   <h2>Chat da comunidade</h2><div class="bx"><label>Aviso fixado no chat<textarea class="fi" id="av" rows="3" maxlength="500" placeholder="Escreva o aviso…"></textarea></label><button class="pri" id="avs">Enviar aviso</button><button class="mini" id="chr" style="color:#ff6b81;justify-self:start">Apagar todas as mensagens do chat</button><div class="ae" id="ae3"></div></div>`;
   let en=1;const er=m=>{const x=$$("ae"+en);if(x)x.textContent=m;else alert(m)},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
-  $$("bm").onchange=()=>{$$("bf").style.display=$$("bm").value==="img"?"":"none"};
-  $$("bs").onclick=async e=>{en=1;const bt=e.target,modo=$$("bm").value,o=$$("bo").value,f=$$("bi").files[0];er("");
+  $$("xbs").onclick=async e=>{en=1;const bt=e.target,o=$$("xbo").value,f=$$("bi").files[0],modo=f?"img":"capa";er("");
     if(b.size>=7)return er("Máximo de 7 banners. Exclua um para adicionar outro.");
-    if(modo==="capa"&&!o)return er("Escolha a obra para usar a capa dela.");
-    if(modo==="img"&&!f)return er("Escolha a imagem do banner.");
-    bt.disabled=true;bt.textContent="Enviando…";
-    try{let img="";if(modo==="img")img=await upl("banners","b-"+Date.now(),f);await addDoc(collection(db,"banners"),{img,obraId:o,usaCapa:modo==="capa",ordem:prox(b)});painel();renderHome()}
+    if(modo==="capa"&&!o)return er("Escolha a obra (para usar a capa dela) ou selecione uma imagem de banner.");
+        bt.disabled=true;bt.textContent="Enviando…";
+    try{let img="";if(modo==="img")img=await upl("banners","b-"+Date.now(),f);await addDoc(collection(db,"banners"),{img,obraId:o,usaCapa:modo==="capa",ordem:prox(b)});painel();renderHome(1)}
     catch(x){const m="Não foi possível adicionar o banner: "+(x.code||x.name||x.message);er(m);alert(m);bt.disabled=false;bt.textContent="Adicionar banner"}};
   $$("avs").onclick=async()=>{en=3;const t=$$("av").value.trim();er("");if(t.length<2)return er("Escreva o aviso.");
     try{const u=auth.currentUser;await addDoc(collection(db,"chat"),{uid:u.uid,nome:(u.displayName||"Administração").slice(0,40),foto:FOTO,texto:t.slice(0,500),tipo:"aviso",criado:serverTimestamp()});$$("av").value="";er("Aviso enviado e fixado no chat.")}catch(x){er("Não foi possível enviar: "+(x.code||x.message))}};
@@ -111,11 +113,11 @@ async function painel(){
   $$("ts").onclick=async()=>{en=2;const n=$$("tn").value.trim(),tp=$$("tt").value;er("");
     if(n.length<2)return er("Dê um nome ao trilho.");if(tp==="obras"&&!sel.length)return er("Marque pelo menos uma obra.");
     const d={nome:n,tipo:tp,obras:tp==="obras"?sel.slice():[]};
-    try{if(edit)await setDoc(doc(db,"trilhos",edit),d,{merge:true});else await addDoc(collection(db,"trilhos"),{...d,ordem:prox(t)});painel();renderHome()}catch(x){er("Erro: "+(x.code||x.message))}};
+    try{if(edit)await setDoc(doc(db,"trilhos",edit),d,{merge:true});else await addDoc(collection(db,"trilhos"),{...d,ordem:prox(t)});painel();renderHome(1)}catch(x){er("Erro: "+(x.code||x.message))}};
   sec.onclick=async e=>{en=1;const d=e.target.dataset;try{
     if(d.x){const[c,id]=d.x.split("|");if(!confirm("Excluir?"))return;await deleteDoc(doc(db,c,id))}
     else if(d.m){const[c,id,s]=d.m.split("|"),L=(c==="banners"?b:t).docs,i=L.findIndex(x=>x.id===id),j=i+ +s;if(j<0||j>=L.length)return;
       const w=writeBatch(db);w.update(doc(db,c,L[i].id),{ordem:L[j].data().ordem});w.update(doc(db,c,L[j].id),{ordem:L[i].data().ordem});await w.commit()}
     else if(d.e){const x=t.docs.find(y=>y.id===d.e);if(!x)return;const v=x.data();edit=d.e;sel=(v.obras||[]).slice();$$("tfh").textContent="Editando: "+v.nome;$$("tn").value=v.nome;$$("tt").value=v.tipo==="leitores_dia"?"leitores_dia":"obras";
       ck().forEach(c=>c.checked=sel.includes(c.value));$$("tob").style.display=$$("tt").value==="obras"?"":"none";$$("ts").textContent="Salvar alterações";$$("tc").style.display="";$$("tn").scrollIntoView({behavior:"smooth",block:"center"});return}
-    else return;painel();renderHome()}catch(x){er("Erro: "+(x.code||x.message))}}}
+    else return;painel();renderHome(1)}catch(x){er("Erro: "+(x.code||x.message))}}}
