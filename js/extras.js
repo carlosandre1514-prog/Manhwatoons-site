@@ -9,11 +9,11 @@ const dia=(n=0)=>new Date(Date.now()-n*864e5).toLocaleDateString("sv-SE",{timeZo
 const TIPOS={populares:"Obras populares da semana",lidas_dia:"Obras mais lidas do dia",favs_semana:"Mais favoritos da semana",leitores_dia:"Ranking de leitores do dia"};
 let FOTO="";
 const st=document.createElement("style");st.textContent=`#bnr{display:none;margin:0 0 14px}#bnr.on{display:block}
-.bn{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.bn::-webkit-scrollbar{display:none}
+.bn{display:flex;gap:0;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.bn::-webkit-scrollbar{display:none}
 .bn>*{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/8;border:0;border-radius:16px;background:var(--sf2) center/cover no-repeat;cursor:pointer}
 .rl{display:grid;gap:8px;margin-bottom:8px}.rl>div{display:flex;align-items:center;gap:12px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}
 .rl .n{width:22px;font-weight:800;color:var(--gold)}.rl .f{width:40px;height:40px;border-radius:50%;background:var(--sf2) center/cover;flex:none}.rl b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rl span{color:var(--mu);font-size:13px}
-#adm2 .bx{display:grid;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}`;
+.cv b{display:none}.ae{color:#ff6b81;font-size:14px;min-height:0}#adm2 .bx{display:grid;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}`;
 document.head.append(st);
 
 /* ---------- envio de imagem (ImageKit) ---------- */
@@ -60,9 +60,16 @@ let busy=0;
 async function renderHome(){if(busy||!$$("trilhos")||!WID.length)return;busy=1;
   try{const [tr,bs]=await Promise.all([getDocs(query(collection(db,"trilhos"),orderBy("ordem"))),getDocs(query(collection(db,"banners"),orderBy("ordem")))]);
     $$("popold").hidden=!tr.empty;$$("trilhos").innerHTML=(await Promise.all(tr.docs.map(d=>trilho(d.data())))).join("");
-    const B=bs.docs.map(d=>d.data()),bn=$$("bnr");bn.classList.toggle("on",!!B.length);$$("hero").hidden=!!B.length;
-    bn.innerHTML=B.length?`<div class="bn">${B.map(b=>{const i=WID.indexOf(b.obraId);return `<button ${i>-1?`data-go="obra" data-w="${i}"`:""} aria-label="Destaque" style="background-image:url('${E(b.img)}')"></button>`}).join("")}</div>`:"";
-    clearInterval(window._bt);if(B.length>1)window._bt=setInterval(()=>{const x=bn.firstElementChild;if(!x||!$$("home").classList.contains("on"))return;x.scrollTo({left:(Math.round(x.scrollLeft/x.clientWidth)+1)%B.length*x.clientWidth,behavior:"smooth"})},5000)}
+    const B=bs.docs.map(d=>d.data()),bn=$$("bnr");bn.classList.toggle("on",!!B.length);$$("hero").style.display=B.length?"none":"";
+    const sl=b=>{const i=WID.indexOf(b.obraId);return `<button ${i>-1?`data-go="obra" data-w="${i}"`:""} aria-label="Destaque" style="background-image:url('${E(b.img)}')"></button>`};
+    const L=B.length>1?[B[B.length-1],...B,B[0]]:B;
+    bn.innerHTML=B.length?`<div class="bn">${L.map(sl).join("")}</div>`:"";
+    clearInterval(window._bt);const x=bn.firstElementChild;
+    if(x&&B.length>1){const w=()=>x.clientWidth,pula=i=>{x.style.scrollSnapType="none";x.scrollLeft=i*w();requestAnimationFrame(()=>x.style.scrollSnapType="")};
+      let tm,tc=0,ok=0;
+      x.addEventListener("scroll",()=>{clearTimeout(tm);tm=setTimeout(()=>{if(!w())return;const i=Math.round(x.scrollLeft/w());if(i<=0)pula(B.length);else if(i>=B.length+1)pula(1)},120)});
+      x.addEventListener("touchstart",()=>tc=1);x.addEventListener("touchend",()=>setTimeout(()=>tc=0,4000));
+      window._bt=setInterval(()=>{if(tc||!w()||!$$("home").classList.contains("on"))return;if(!ok){ok=1;pula(1);return}x.scrollTo({left:(Math.round(x.scrollLeft/w())+1)*w(),behavior:"smooth"})},4000)}}
   catch(e){}busy=0}
 const h0=window.home;window.home=function(){h0();renderHome()};setTimeout(()=>{Object.keys(cache).forEach(k=>delete cache[k]);renderHome()},1500);
 
@@ -74,15 +81,15 @@ async function painel(){
   const [b,t]=await Promise.all([getDocs(query(collection(db,"banners"),orderBy("ordem"))),getDocs(query(collection(db,"trilhos"),orderBy("ordem")))]);
   const li=(c,d,txt,img)=>`<div class="li"><div class="t"><b>${E(txt)}</b></div><div class="act"><button class="mini" data-m="${c}|${d.id}|-1">↑</button><button class="mini" data-m="${c}|${d.id}|1">↓</button><button class="mini" data-x="${c}|${d.id}">Excluir</button></div></div>`;
   sec.innerHTML=`<h2 style="margin-top:8px">Banners do carrossel</h2><div class="list" style="grid-template-columns:1fr">${b.docs.map(d=>li("banners",d,"Banner · "+(WID.indexOf(d.data().obraId)>-1?W[WID.indexOf(d.data().obraId)][0]:"sem link"))).join("")||'<p style="color:var(--mu)">Nenhum banner.</p>'}</div>
-  <div class="bx"><label>Imagem (até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><label>Abre a obra (opcional)<select class="fi" id="bo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><button class="pri" id="bs">Adicionar banner</button></div>
+  <div class="bx"><label>Imagem (até 5 MB)<input class="fi" type="file" id="bi" accept="image/*"></label><label>Abre a obra (opcional)<select class="fi" id="bo"><option value="">Nenhuma</option>${WID.map((id,i)=>`<option value="${id}">${E(W[i][0])}</option>`).join("")}</select></label><button class="pri" id="bs">Adicionar banner</button><div class="ae" id="ae1"></div></div>
   <h2>Trilhos da home</h2><div class="list" style="grid-template-columns:1fr">${t.docs.map(d=>li("trilhos",d,d.data().nome+" · "+TIPOS[d.data().tipo])).join("")||'<p style="color:var(--mu)">Nenhum trilho. A home mostra "Populares da semana" até você criar o primeiro.</p>'}</div>
-  <div class="bx"><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label><button class="pri" id="ts">Criar trilho</button></div><span class="er" id="ae"></span>`;
-  const er=m=>{$$("ae").textContent=m},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
-  $$("bs").onclick=async e=>{const f=$$("bi").files[0];if(!f)return er("Escolha a imagem do banner.");e.target.disabled=true;er("");
+  <div class="bx"><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label><button class="pri" id="ts">Criar trilho</button><div class="ae" id="ae2"></div></div>`;
+  let en=1;const er=m=>{const x=$$("ae"+en);if(x)x.textContent=m;else alert(m)},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
+  $$("bs").onclick=async e=>{en=1;const f=$$("bi").files[0];if(b.size>=7)return er("Máximo de 7 banners. Exclua um para adicionar outro.");if(!f)return er("Escolha a imagem do banner.");e.target.disabled=true;er("");
     try{const img=await upl("banners","b-"+Date.now(),f);await addDoc(collection(db,"banners"),{img,obraId:$$("bo").value,ordem:prox(b)});delete window._bt;painel();renderHome()}catch(x){er("Erro: "+x.message);e.target.disabled=false}};
-  $$("ts").onclick=async()=>{const n=$$("tn").value.trim();if(n.length<2)return er("Dê um nome ao trilho.");
+  $$("ts").onclick=async()=>{en=2;const n=$$("tn").value.trim();if(n.length<2)return er("Dê um nome ao trilho.");
     try{await addDoc(collection(db,"trilhos"),{nome:n,tipo:$$("tt").value,ordem:prox(t)});painel();renderHome()}catch(x){er("Erro: "+(x.code||x.message))}};
-  sec.onclick=async e=>{const d=e.target.dataset;try{
+  sec.onclick=async e=>{en=1;const d=e.target.dataset;try{
     if(d.x){const[c,id]=d.x.split("|");if(!confirm("Excluir?"))return;await deleteDoc(doc(db,c,id))}
     else if(d.m){const[c,id,s]=d.m.split("|"),L=(c==="banners"?b:t).docs,i=L.findIndex(x=>x.id===id),j=i+ +s;if(j<0||j>=L.length)return;
       const w=writeBatch(db);w.update(doc(db,c,L[i].id),{ordem:L[j].data().ordem});w.update(doc(db,c,L[j].id),{ordem:L[i].data().ordem});await w.commit()}
