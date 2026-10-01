@@ -6,7 +6,7 @@ import {SIGNER_URL} from "./config.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dia=(n=0)=>new Date(Date.now()-n*864e5).toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"});
-const VER="v13";
+const VER="v14";
 const TIPOS={obras:"Obras que eu escolher",populares:"Obras populares da semana",lidas_dia:"Obras mais lidas do dia",favs_semana:"Mais favoritos da semana",leitores_dia:"Ranking de leitores do dia"};
 let FOTO="";
 const st=document.createElement("style");st.textContent=`#bnr{display:none;margin:0 0 14px}#bnr.on{display:block}
@@ -42,16 +42,56 @@ pa.onclick=()=>auth.currentUser?inp.click():alert("Entre na sua conta para coloc
 inp.onchange=async()=>{const f=inp.files[0],u=auth.currentUser;inp.value="";if(!f||!u)return;
   try{const url=await upl("avatars",u.uid+"-"+Date.now(),f,"avatar");await setDoc(doc(db,"perfis",u.uid),{nome:u.displayName||"Leitor",foto:url});showFoto(url)}
   catch(x){alert(x.message==="maximo_5mb"?"A foto pode ter até 5 MB.":x.message==="muito_rapido"?"Espere alguns segundos e tente de novo.":"Não foi possível enviar a foto ("+x.message+").")}};
-onAuthStateChanged(auth,async u=>{if(!u)return showFoto("");
+onAuthStateChanged(auth,async u=>{if(!u){showFoto("");XP={xp:0,dia:"",n:0,ld:""};return mostrarXP()}carregarXP(u);
   const s=await getDoc(doc(db,"perfis",u.uid)).catch(()=>null);
   if(s&&s.exists())showFoto(s.data().foto);else setDoc(doc(db,"perfis",u.uid),{nome:u.displayName||"Leitor",foto:""}).catch(()=>{})});
+
+
+/* ---------- XP e níveis de cultivo (1 a 1000) ---------- */
+const R=[
+["Condensação de Qi",[["Inicial",1,15],["Intermediário",16,30],["Avançado",31,45],["Pico / Consumação",46,50]]],
+["Estabelecimento de Fundação",[["Inicial",51,65],["Intermediário",66,80],["Avançado",81,95],["Pico",96,100]]],
+["Formação do Núcleo Dourado",[["Inicial",101,118],["Intermediário",119,135],["Avançado",136,152],["Pico",153,160]]],
+["Alma Nascente",[["Inicial",161,180],["Intermediário",181,200],["Avançado",201,220],["Pico",221,230]]],
+["Formação da Alma",[["Inicial",231,250],["Intermediário",251,270],["Avançado",271,290],["Pico",291,300]]],
+["Transformação Ying",[["Inicial",301,318],["Intermediário",319,335],["Avançado",336,352],["Pico",353,360]]],
+["Estágio Ascendente",[["Inicial",361,372],["Intermediário",373,384],["Avançado",385,395],["Pico do Passo Mortal",396,400]]],
+["Yin Ilusório",[["Abertura Incorpórea",401,412],["Consolidação da Ilusão",413,428],["Pico Yin",429,440]]],
+["Yang Corpóreo",[["Materialização Divina",441,452],["Consolidação Yang",453,468],["Pico Yang / Imortalidade Divina",469,480]]],
+["Visão do Nirvana",[["Inicial",481,495],["Intermediário",496,510],["Avançado",511,525],["Pico",526,530]]],
+["Limpeza do Nirvana",[["Inicial",531,548],["Intermediário",549,565],["Avançado",566,582],["Pico",583,590]]],
+["Vazio do Nirvana",[["Inicial",591,608],["Intermediário",609,625],["Avançado",626,642],["Pico",643,650]]],
+["Tribulação Celestial",[["1ª à 3ª Tribulação",651,680],["4ª e 5ª Tribulação",681,699],["Quebra da Tribulação",700,700]]],
+["Nirvana Vazio",[["Inicial",701,718],["Intermediário",719,735],["Avançado",736,752],["Pico",753,760]]],
+["Vazio Arcano",[["Inicial",761,780],["Intermediário",781,800],["Avançado",801,820],["Pico",821,830]]],
+["Tribulação do Vazio",[["Inicial",831,850],["Intermediário",851,870],["Avançado",871,890],["Pico",891,900]]],
+["Transcendente",[["Inicial",901,925],["Intermediário",926,950],["Avançado",951,975],["Grande Perfeição Supremo",976,990]]],
+["O Limiar do Absoluto",[["Preparação para o Ápice",991,999]]],
+["Ápice Supremo",[["Lorde do Dao",1000,1000]]]];
+const PASSO=L=>L<=400?"Primeiro Passo · Reino Mortal e Espiritual":L<=480?"Fronteira Espiritual":L<=700?"Segundo Passo · Reino do Vazio e Nirvana":L<=900?"Terceiro Passo · Origem do Dao":"Quarto Passo · O Ápice do Universo";
+const xpPara=L=>Math.round(30*Math.pow(L-1,1.4));
+function nivel(x){x=Math.max(0,x||0);let L=Math.min(1000,Math.floor(Math.pow(x/30,1/1.4))+1);while(L<1000&&x>=xpPara(L+1))L++;while(L>1&&x<xpPara(L))L--;return L}
+function info(L){for(const r of R)for(const e of r[1])if(L>=e[1]&&L<=e[2])return{reino:r[0],estagio:e[0]};return{reino:"",estagio:""}}
+let XP={xp:0,dia:"",n:0,ld:""};
+window.XPX={nivel,info,xp:()=>XP.xp};
+function toast(t){let e=$$("xpt");if(!e){e=document.createElement("div");e.id="xpt";e.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#0e0e0e;border:1px solid #00e05c;color:#f4f4f4;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis";document.body.append(e)}e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity=0,3200)}
+const xc=document.createElement("div");xc.id="xpc";xc.style.cssText="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:14px 0";
+xc.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b id="xn" style="font-size:20px"></b><span id="xe" style="color:var(--mu);font-size:13px"></span></div><div id="xr" style="font-size:14px;margin:2px 0 8px"></div><div class="pg"><i id="xb" style="width:0"></i></div><div id="xs" style="color:var(--mu);font-size:12px;margin-top:6px"></div>';
+document.querySelector("#perfil .pf").after(xc);
+function mostrarXP(){const u=auth.currentUser;xc.style.display=u?"":"none";if(!u)return;const L=nivel(XP.xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1),i=info(L);
+  $$("xn").textContent="Nível "+L;$$("xe").textContent=L>=1000?XP.xp+" XP · máximo":(XP.xp-a)+" / "+(b-a)+" XP";$$("xr").textContent=i.reino+" · "+i.estagio;$$("xb").style.width=(L>=1000?100:Math.min(100,(XP.xp-a)/(b-a)*100))+"%";$$("xs").textContent=PASSO(L)}
+async function darXP(mk,r,campos,txt){const u=auth.currentUser;if(!u||!r)return;const antes=nivel(XP.xp);
+  try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,"niveis",u.uid),{xp:increment(r),mk,...campos},{merge:true});await b.commit();
+    Object.assign(XP,campos);XP.xp+=r;mostrarXP();const L=nivel(XP.xp);toast(L>antes?"Nível "+L+" · "+info(L).reino:"+"+r+" XP · "+txt)}catch(e){}}
+async function carregarXP(u){const s=await getDoc(doc(db,"niveis",u.uid)).catch(()=>null);XP={xp:0,dia:"",n:0,ld:"",...(s&&s.exists()?s.data():{})};mostrarXP();const d=dia();if(XP.ld!==d)await darXP(`x_${d}_${u.uid}`,10,{ld:d},"Login diário")}
+function xpLeitura(o,cl){const u=auth.currentUser;if(!u)return;const d=dia(),n0=XP.dia===d?XP.n:0,r=n0<3?[50,30,20][n0]:n0<10?10:0,mk=`p_${d}_${u.uid}_${o}_${cl}`;if(!r||seen.has(mk))return;seen.add(mk);darXP(mk,r,{dia:d,n:n0+1},"Capítulo lido")}
 
 /* ---------- contagem de leituras e favoritos ---------- */
 const seen=new Set();
 async function marcar(mk,col,obra,extra){const u=auth.currentUser;if(!u||seen.has(mk))return;seen.add(mk);const d=dia();
   try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,col,d+"_"+obra),{dia:d,obraId:obra,n:increment(1),mk},{merge:true});
-    if(extra)b.set(doc(db,"leitores",d+"_"+u.uid),{dia:d,uid:u.uid,nome:u.displayName||"Leitor",foto:FOTO,n:increment(1),mk},{merge:true});await b.commit()}catch(e){}}
-const rl0=window.rl;window.rl=async function(){await rl0();const o=WID[S.cur];if(o&&W[S.cur]&&W[S.cur][3]>0&&S.cap>=1){const u=auth.currentUser;if(u)marcar(`l_${dia()}_${u.uid}_${o}_${lb(S.cur,S.cap)}`,"leituras",o,1)}};
+    if(extra)b.set(doc(db,"leitores",d+"_"+u.uid),{dia:d,uid:u.uid,nome:u.displayName||"Leitor",foto:FOTO,xp:XP.xp,n:increment(1),mk},{merge:true});await b.commit()}catch(e){}}
+const rl0=window.rl;window.rl=async function(){await rl0();const o=WID[S.cur];if(o&&W[S.cur]&&W[S.cur][3]>0&&S.cap>=1){const u=auth.currentUser;if(u){marcar(`l_${dia()}_${u.uid}_${o}_${lb(S.cur,S.cap)}`,"leituras",o,1);xpLeitura(o,lb(S.cur,S.cap))}}};
 $$("ofv").addEventListener("click",()=>{const u=auth.currentUser,o=WID[S.cur];if(u&&o&&P.fav.indexOf(S.cur)>-1)marcar(`f_${dia()}_${u.uid}_${o}`,"favs",o)});
 
 /* ---------- home: banners e trilhos ---------- */
@@ -62,7 +102,7 @@ async function trilho(t){let h=`<h2>${E(t.nome)}</h2>`;
   if(t.tipo==="obras"){const L=(t.obras||[]).map(id=>WID.indexOf(id)).filter(i=>i>-1&&W[i]&&!W[i][4]);
     return h+(L.length?`<div class="row">${L.map(i=>`<button class="card" data-go="obra" data-w="${i}"><div style="position:relative">${cv(W[i],i)}</div><div class="nm">${E(W[i][0])}</div><div class="m"><svg><use href="#i-star"/></svg>${W[i][2]}</div></button>`).join("")}</div>`:`<p style="color:var(--mu)">Este trilho ainda não tem obras.</p>`)}
   if(t.tipo==="leitores_dia"){const s=await getDocs(query(collection(db,"leitores"),where("dia","==",dia()))),L=s.docs.map(x=>x.data()).sort((a,b)=>b.n-a.n).slice(0,10);
-    return h+(L.length?`<div class="rl">${L.map((x,r)=>`<div><span class="n">${r+1}</span><i class="f" style="background-image:url('${E(x.foto||"")}')"></i><b>${E(x.nome)}</b><span>${x.n} cap.</span></div>`).join("")}</div>`:`<p style="color:var(--mu)">Ninguém leu hoje ainda.</p>`)}
+    return h+(L.length?`<div class="rl">${L.map((x,r)=>`<div><span class="n">${r+1}</span><i class="f" style="background-image:url('${E(x.foto||"")}')"></i><b>${E(x.nome)}${x.xp>0?` <small style="color:var(--mu);font-weight:400">· Nv. ${nivel(x.xp)}</small>`:""}</b><span>${x.n} cap.</span></div>`).join("")}</div>`:`<p style="color:var(--mu)">Ninguém leu hoje ainda.</p>`)}
   const m=await soma(t.tipo==="favs_semana"?"favs":"leituras",t.tipo==="lidas_dia"?1:7),un=t.tipo==="favs_semana"?"fav.":"leituras";
   let L=WID.map((id,i)=>[i,m[id]||0]).filter(x=>!W[x[0]][4]).sort((a,b)=>b[1]-a[1]);if(L.some(x=>x[1]>0))L=L.filter(x=>x[1]>0);
   return h+`<div class="row">${L.slice(0,10).map((x,r)=>card(x[0],r,x[1]?x[1]+" "+un:"—")).join("")}</div>`}
