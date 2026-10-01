@@ -6,12 +6,19 @@ import {SIGNER_URL} from "./config.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dia=(n=0)=>new Date(Date.now()-n*864e5).toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"});
-const VER="v12";
+const VER="v13";
 const TIPOS={obras:"Obras que eu escolher",populares:"Obras populares da semana",lidas_dia:"Obras mais lidas do dia",favs_semana:"Mais favoritos da semana",leitores_dia:"Ranking de leitores do dia"};
 let FOTO="";
 const st=document.createElement("style");st.textContent=`#bnr{display:none;margin:0 0 14px}#bnr.on{display:block}
 .bn{display:flex;gap:0;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.bn::-webkit-scrollbar{display:none}
-.bn>*{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:2/1;border:0;border-radius:16px;background:var(--sf2) center/cover no-repeat;cursor:pointer;position:relative;overflow:hidden}.bn>*::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;background:linear-gradient(to top,rgba(0,0,0,.78),transparent);pointer-events:none}.bc{position:absolute;left:16px;bottom:16px;z-index:1;background:#00e05c;color:#000;font-weight:800;border-radius:999px;padding:10px 20px;font-size:15px}
+.bn>*{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:2/1;border:0;border-radius:16px;background:var(--sf2) center/cover no-repeat;cursor:pointer;position:relative;overflow:hidden}.bn>*::after{content:"";position:absolute;left:0;right:0;bottom:0;height:85%;background:linear-gradient(to top,rgba(0,0,0,.9),rgba(0,0,0,.55) 55%,transparent);pointer-events:none}
+.bt{position:absolute;left:14px;right:14px;bottom:12px;z-index:1;display:flex;flex-direction:column;gap:5px;text-align:left}
+.bt b{font:700 clamp(16px,4.6vw,24px)/1.15 "Poppins",system-ui,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bt p{margin:0;font-size:12.5px;line-height:1.35;color:#d4d4d4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bb{display:flex;gap:8px;margin-top:3px}
+.bc,.bd{border-radius:999px;padding:8px 18px;font-weight:700;font-size:14px;font-family:"Poppins",system-ui,sans-serif}
+.bc{background:#00e05c;color:#000}.bd{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.nm,.li .t b,.hero h1,#cont .t b{font-family:"Poppins",system-ui,sans-serif;font-weight:600;letter-spacing:0}
 .rl{display:grid;gap:8px;margin-bottom:8px}.rl>div{display:flex;align-items:center;gap:12px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}
 .rl .n{width:22px;font-weight:800;color:var(--gold)}.rl .f{width:40px;height:40px;border-radius:50%;background:var(--sf2) center/cover;flex:none}.rl b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rl span{color:var(--mu);font-size:13px}
 .dots{display:flex;justify-content:center;gap:6px;margin-top:10px}.dots i{width:8px;height:8px;border-radius:99px;background:#3a3a3a;cursor:pointer;transition:.25s}.dots i.a{background:#00e05c;width:22px}.cv b{display:none}.ck{display:flex;gap:10px;align-items:center;padding:6px 0}.ck input{width:20px;height:20px;accent-color:#00e05c}.ae{color:#ff6b81;font-size:14px;min-height:0}#adm2 .bx{display:grid;gap:10px;background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}`;
@@ -66,7 +73,8 @@ async function renderHome(f){if(busy||!$$("trilhos")||!window.WID||!WID.length||
     $$("popold").hidden=!tr.empty;$$("trilhos").innerHTML=(await Promise.all(tr.docs.map(d=>trilho(d.data())))).join("");
     const B=bs.docs.map(d=>d.data()),bn=$$("bnr");bn.classList.toggle("on",!!B.length);$$("hero").style.display=B.length?"none":"";
     const capa=i=>i>-1&&W[i]?((W[i][1].match(/url\(['"]?(.*?)['"]?\)/)||[])[1]||""):"";
-    const sl=b=>{const i=WID.indexOf(b.obraId),im=b.usaCapa?capa(i):b.img;return `<div ${i>-1?`data-go="obra" data-w="${i}" role="button"`:""} aria-label="Destaque" style="background-image:url('${E(im||"")}');${b.usaCapa?"background-position:center 20%":""}">${i>-1?'<span class="bc">Começar a ler</span>':""}</div>`};
+    const sl=b=>{const i=WID.indexOf(b.obraId),im=b.usaCapa?capa(i):b.img,w=i>-1?W[i]:null,sn=w?(SY[i]||""):"";
+    return `<div ${w?`data-go="obra" data-w="${i}" role="button"`:""} aria-label="Destaque" style="background-image:url('${E(im||"")}');${b.usaCapa?"background-position:center 20%":""}">${w?`<div class="bt"><b>${E(w[0])}</b>${sn?`<p>${E(sn)}</p>`:""}<div class="bb">${w[3]>0?`<span class="bc" data-go="leitor" data-w="${i}" data-cap="1">Ler agora</span>`:""}<span class="bd" data-go="obra" data-w="${i}">Detalhes</span></div></div>`:""}</div>`};
     const L=B.length>1?[B[B.length-1],...B,B[0]]:B;
     bn.innerHTML=B.length?`<div class="bn">${L.map(sl).join("")}</div>${B.length>1?`<div class="dots">${B.map(()=>"<i></i>").join("")}</div>`:""}`:"";
     clearInterval(window._bt);const x=bn.firstElementChild;
@@ -94,7 +102,7 @@ async function painel(){
   <h2>Trilhos da home</h2><div class="list" style="grid-template-columns:1fr">${t.docs.map(d=>li("trilhos",d,d.data().nome+" · "+(TIPOS[d.data().tipo]||"")+(d.data().tipo==="obras"?" ("+(d.data().obras||[]).length+")":""),`<button class="mini" data-e="${d.id}">Editar</button>`)).join("")||'<p style="color:var(--mu)">Nenhum trilho. A home mostra "Populares da semana" até você criar o primeiro.</p>'}</div>
   <div class="bx"><b id="tfh">Novo trilho</b><label>Nome do trilho<input class="fi" id="tn" placeholder="Ex.: Em alta hoje"></label><label>Tipo<select class="fi" id="tt"><option value="obras">Obras que eu escolher</option><option value="leitores_dia">Ranking de leitores do dia</option></select></label><div id="tob"><div style="color:var(--mu);font-size:14px;margin-bottom:4px">Marque as obras (aparecem na ordem em que você marcar):</div>${WID.map((id,i)=>`<label class="ck"><input type="checkbox" value="${id}"> ${E(W[i][0])}</label>`).join("")}</div><button class="pri" id="ts">Criar trilho</button><button class="mini" id="tc" style="display:none;justify-self:start">Cancelar edição</button><div class="ae" id="ae2"></div></div>
   <h2>Chat da comunidade</h2><div class="bx"><label>Aviso fixado no chat<textarea class="fi" id="av" rows="3" maxlength="500" placeholder="Escreva o aviso…"></textarea></label><button class="pri" id="avs">Enviar aviso</button><button class="mini" id="chr" style="color:#ff6b81;justify-self:start">Apagar todas as mensagens do chat</button><div class="ae" id="ae3"></div></div>`;
-  let en=1;const er=m=>{const x=$$("ae"+en);if(x)x.textContent=m;else alert(m)},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
+  let en=1;const er=(m,n)=>{const x=$$("ae"+(n||en));if(x)x.textContent=m;else alert(m)},prox=d=>d.docs.reduce((a,x)=>Math.max(a,x.data().ordem||0),0)+1;
   $$("xbs").onclick=async e=>{en=1;const bt=e.target,o=$$("xbo").value,f=$$("bi").files[0],modo=f?"img":"capa";er("");
     if(b.size>=7)return er("Máximo de 7 banners. Exclua um para adicionar outro.");
     if(modo==="capa"&&!o)return er("Escolha a obra (para usar a capa dela) ou selecione uma imagem de banner.");
@@ -104,7 +112,10 @@ async function painel(){
   $$("avs").onclick=async()=>{en=3;const t=$$("av").value.trim();er("");if(t.length<2)return er("Escreva o aviso.");
     try{const u=auth.currentUser;await addDoc(collection(db,"chat"),{uid:u.uid,nome:(u.displayName||"Administração").slice(0,40),foto:FOTO,texto:t.slice(0,500),tipo:"aviso",criado:serverTimestamp()});$$("av").value="";er("Aviso enviado e fixado no chat.")}catch(x){er("Não foi possível enviar: "+(x.code||x.message))}};
   $$("chr").onclick=async()=>{en=3;if(!confirm("Apagar TODAS as mensagens e avisos do chat? Isso não pode ser desfeito."))return;er("Apagando…");
-    try{let n=0;for(;;){const q=await getDocs(query(collection(db,"chat"),limit(100)));if(q.empty)break;const w=writeBatch(db);q.docs.forEach(d=>w.delete(d.ref));await w.commit();n+=q.size}er("Chat limpo: "+n+" mensagens apagadas.")}catch(x){er("Não foi possível apagar: "+(x.code||x.message))}};
+    try{let n=0;for(let r=0;r<400;r++){const q=await getDocs(query(collection(db,"chat"),limit(50)));if(q.empty)break;
+      const res=await Promise.allSettled(q.docs.map(d=>deleteDoc(d.ref))),ok=res.filter(x=>x.status==="fulfilled").length;n+=ok;er("Apagando… "+n);
+      if(!ok)throw res.find(x=>x.status==="rejected").reason}
+      er("Chat limpo: "+n+" mensagens apagadas.")}catch(x){const m="Não foi possível apagar: "+(x.code||x.message);er(m);alert(m)}};
   let sel=[],edit=null;
   const ck=()=>[...sec.querySelectorAll("#tob input")];
   $$("tob").onchange=e=>{const v=e.target.value;sel=sel.filter(x=>x!==v);if(e.target.checked)sel.push(v)};
@@ -114,10 +125,10 @@ async function painel(){
     if(n.length<2)return er("Dê um nome ao trilho.");if(tp==="obras"&&!sel.length)return er("Marque pelo menos uma obra.");
     const d={nome:n,tipo:tp,obras:tp==="obras"?sel.slice():[]};
     try{if(edit)await setDoc(doc(db,"trilhos",edit),d,{merge:true});else await addDoc(collection(db,"trilhos"),{...d,ordem:prox(t)});painel();renderHome(1)}catch(x){er("Erro: "+(x.code||x.message))}};
-  sec.onclick=async e=>{en=1;const d=e.target.dataset;try{
+  sec.onclick=async e=>{const d=e.target.dataset;try{
     if(d.x){const[c,id]=d.x.split("|");if(!confirm("Excluir?"))return;await deleteDoc(doc(db,c,id))}
     else if(d.m){const[c,id,s]=d.m.split("|"),L=(c==="banners"?b:t).docs,i=L.findIndex(x=>x.id===id),j=i+ +s;if(j<0||j>=L.length)return;
       const w=writeBatch(db);w.update(doc(db,c,L[i].id),{ordem:L[j].data().ordem});w.update(doc(db,c,L[j].id),{ordem:L[i].data().ordem});await w.commit()}
     else if(d.e){const x=t.docs.find(y=>y.id===d.e);if(!x)return;const v=x.data();edit=d.e;sel=(v.obras||[]).slice();$$("tfh").textContent="Editando: "+v.nome;$$("tn").value=v.nome;$$("tt").value=v.tipo==="leitores_dia"?"leitores_dia":"obras";
       ck().forEach(c=>c.checked=sel.includes(c.value));$$("tob").style.display=$$("tt").value==="obras"?"":"none";$$("ts").textContent="Salvar alterações";$$("tc").style.display="";$$("tn").scrollIntoView({behavior:"smooth",block:"center"});return}
-    else return;painel();renderHome(1)}catch(x){er("Erro: "+(x.code||x.message))}}}
+    else return;painel();renderHome(1)}catch(x){er("Erro: "+(x.code||x.message),1)}}}
