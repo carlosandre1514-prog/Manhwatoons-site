@@ -4,36 +4,44 @@ import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.
 import {getFirestore,collection,doc,getDoc,addDoc,deleteDoc,query,orderBy,limit,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const st=document.createElement("style");st.textContent=`#chb{background:none;border:0;color:var(--tx);padding:4px;display:grid;place-items:center;cursor:pointer}#chb:hover{color:var(--gold)}
-#cm{display:flex;flex-direction:column;gap:12px;padding:6px 0 14px;min-height:50vh}
-.cx{display:flex;gap:10px;max-width:88%}.cx .f{width:36px;height:36px;border-radius:50%;background:var(--sf2) center/cover;flex:none;display:grid;place-items:center;font-weight:800;color:var(--gold)}
-.cx .b{background:var(--sf);border:1px solid var(--bd);border-radius:4px 16px 16px 16px;padding:8px 12px;min-width:0;overflow-wrap:anywhere}.cx .n{font-size:12px;color:var(--mu);margin-bottom:2px}.cx .n b{color:var(--gold)}
-.cx.me{align-self:flex-end;flex-direction:row-reverse}.cx.me .b{background:var(--gold);color:var(--on);border-color:var(--gold);border-radius:16px 4px 16px 16px}.cx.me .n,.cx.me .f{display:none}
-.cx .x{background:none;border:0;color:var(--mu);font-size:12px;padding:0 0 0 8px;cursor:pointer}.cx.me .x{color:var(--on)}
-#cf{display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:10px 0;border-top:1px solid var(--bd)}
-#cf input{flex:1;min-width:0;background:var(--sf);border:1px solid var(--bd);border-radius:999px;color:var(--tx);padding:12px 16px;font:inherit}
-#cf button{border:0;border-radius:999px;background:var(--gold);color:var(--on);font-weight:800;padding:0 20px;font:inherit;font-weight:800;cursor:pointer}`;
+const st=document.createElement("style");st.textContent=`
+#chb{background:none;border:0;color:#f4f4f4;padding:4px;display:grid;place-items:center;cursor:pointer;flex:none}#chb:hover{color:#00e05c}
+#chat.on{display:flex;flex-direction:column;min-height:320px}
+#chat .ch-t{margin:4px 0 8px;font-size:22px}
+#chat .ch-l{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:6px 2px 10px;-webkit-overflow-scrolling:touch}
+.ch-m{display:flex;gap:8px;align-items:flex-end;max-width:86%}
+.ch-av{width:34px;height:34px;border-radius:50%;background:#1c1c1c center/cover no-repeat;flex:none;display:grid;place-items:center;font-weight:800;color:#00e05c;font-size:14px}
+.ch-bb{background:#1c1c1c;color:#f4f4f4;border-radius:16px 16px 16px 4px;padding:8px 12px;overflow-wrap:anywhere;font-size:15px;line-height:1.35;min-width:0}
+.ch-nm{font-size:12px;color:#00e05c;font-weight:700;margin-bottom:2px}.ch-tm{font-weight:400;opacity:.6;margin-left:6px;font-size:11px}
+.ch-m.me{align-self:flex-end;flex-direction:row-reverse}.ch-m.me .ch-bb{background:#00e05c;color:#000;border-radius:16px 16px 4px 16px}.ch-m.me .ch-nm{display:none}.ch-m.me .ch-av{display:none}
+.ch-x{background:none;border:0;color:inherit;opacity:.55;font-size:12px;padding:0 0 0 8px;cursor:pointer}
+.ch-f{display:flex;gap:8px;padding-top:10px;border-top:1px solid #262626}
+.ch-i{flex:1;min-width:0;background:#0e0e0e;border:1px solid #262626;border-radius:999px;color:#f4f4f4;padding:12px 16px;font:inherit;font-size:16px}
+.ch-s{flex:none;border:0;border-radius:999px;background:#00e05c;color:#000;font:inherit;font-weight:800;padding:0 22px;min-height:44px;cursor:pointer}
+.ch-e{color:#ff6b81;font-size:13px;min-height:16px;margin-top:4px}
+.ch-v{color:#b3b3b3;text-align:center;margin:auto}`;
 document.head.append(st);
 
 const btn=Object.assign(document.createElement("button"),{id:"chb",title:"Chat da comunidade"});btn.setAttribute("aria-label","Chat da comunidade");
 btn.innerHTML='<svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-btn.onclick=()=>{go("chat");window.scrollTo(0,0)};document.querySelector("header").prepend(btn);
+btn.onclick=()=>{go("chat")};document.querySelector("header").prepend(btn);
 
 const sec=document.createElement("section");sec.className="v";sec.id="chat";$$("adm").after(sec);
-sec.innerHTML='<h2 style="margin-top:8px">Comunidade</h2><div id="cm"></div><form id="cf"><input id="ct" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem…"><button>Enviar</button></form><span class="er" id="ce"></span>';
-let un=null,foto=null,ult=0;
+sec.innerHTML='<h2 class="ch-t">Comunidade</h2><div class="ch-l" id="chl"></div><form class="ch-f" id="chf"><input class="ch-i" id="chi" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem…"><button class="ch-s" type="submit">Enviar</button></form><div class="ch-e" id="che"></div>';
+let un=null,foto="",ult=0;
 const hora=t=>t?t.toDate().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:"America/Sao_Paulo"}):"";
+function fit(){if(!sec.classList.contains("on"))return;const b=$$("bot"),bh=b&&getComputedStyle(b).display!=="none"?b.offsetHeight:0,top=sec.getBoundingClientRect().top+scrollY;sec.style.height=Math.max(320,innerHeight-top-bh-12)+"px"}
+addEventListener("resize",fit);
 function ouvir(){if(un)return;
-  un=onSnapshot(query(collection(db,"chat"),orderBy("criado","desc"),limit(60)),s=>{const box=$$("cm"),perto=innerHeight+scrollY>document.body.scrollHeight-160,me=auth.currentUser&&auth.currentUser.uid,adm=window.isA&&isA();
-    box.innerHTML=s.docs.map(d=>{const x=d.data({serverTimestamps:"estimate"}),mine=x.uid===me;
-      return `<div class="cx${mine?" me":""}"><div class="f" style="background-image:url('${E(x.foto||"")}')">${x.foto?"":E((x.nome||"?")[0].toUpperCase())}</div><div class="b"><div class="n"><b>${E(x.nome||"Leitor")}</b> · ${hora(x.criado)}${mine||adm?`<button class="x" data-d="${d.id}">✕</button>`:""}</div>${E(x.texto)}${mine?`<button class="x" data-d="${d.id}">✕</button>`:""}</div></div>`}).reverse().join("")||'<p style="color:var(--mu)">Nenhuma mensagem ainda. Comece a conversa!</p>';
-    if(perto)scrollTo(0,document.body.scrollHeight)},()=>{$$("ce").textContent="Não foi possível carregar o chat."})}
-function parar(){if(un){un();un=null}}
-new MutationObserver(()=>{if(sec.classList.contains("on")){const b=$$("bot");$$("cf").style.bottom=b&&getComputedStyle(b).display!=="none"?b.offsetHeight+"px":"0";ouvir()}else parar()}).observe(sec,{attributes:true,attributeFilter:["class"]});
-onAuthStateChanged(auth,async u=>{$$("ct").placeholder=u?"Escreva uma mensagem…":"Entre para participar do chat";foto=null;
+  un=onSnapshot(query(collection(db,"chat"),orderBy("criado","desc"),limit(60)),s=>{const box=$$("chl"),me=auth.currentUser&&auth.currentUser.uid,adm=window.isA&&isA();
+    box.innerHTML=s.docs.map(d=>{const x=d.data({serverTimestamps:"estimate"}),mine=x.uid===me,nm=x.nome||"Leitor";
+      return `<div class="ch-m${mine?" me":""}"><div class="ch-av"${x.foto?` style="background-image:url('${E(x.foto)}')"`:""}>${x.foto?"":E(nm[0].toUpperCase())}</div><div class="ch-bb"><div class="ch-nm">${E(nm)}<span class="ch-tm">${hora(x.criado)}</span>${mine||adm?`<button class="ch-x" data-d="${d.id}" aria-label="Apagar">✕</button>`:""}</div>${E(x.texto)}${mine?`<button class="ch-x" data-d="${d.id}" aria-label="Apagar">✕</button>`:""}</div></div>`}).reverse().join("")||'<p class="ch-v">Nenhuma mensagem ainda. Comece a conversa!</p>';
+    box.scrollTop=box.scrollHeight},()=>{$$("che").textContent="Não foi possível carregar o chat."})}
+new MutationObserver(()=>{if(sec.classList.contains("on")){scrollTo(0,0);fit();ouvir()}else if(un){un();un=null}}).observe(sec,{attributes:true,attributeFilter:["class"]});
+onAuthStateChanged(auth,async u=>{$$("chi").placeholder=u?"Escreva uma mensagem…":"Entre para participar do chat";foto="";
   if(u){const s=await getDoc(doc(db,"perfis",u.uid)).catch(()=>null);foto=s&&s.exists()?s.data().foto||"":""}});
-$$("cf").onsubmit=async e=>{e.preventDefault();const u=auth.currentUser,t=$$("ct").value.trim(),er=$$("ce");er.textContent="";
-  if(!u)return go("login");if(!t)return;if(Date.now()-ult<3000)return er.textContent="Calma, espere alguns segundos entre as mensagens.";ult=Date.now();
-  try{await addDoc(collection(db,"chat"),{uid:u.uid,nome:(u.displayName||"Leitor").slice(0,40),foto:foto||"",texto:t.slice(0,500),criado:serverTimestamp()});$$("ct").value="";scrollTo(0,document.body.scrollHeight)}
-  catch(x){er.textContent="Não foi possível enviar ("+(x.code||"erro")+")."}};
-$$("cm").onclick=async e=>{const id=e.target.dataset.d;if(!id||!confirm("Apagar esta mensagem?"))return;try{await deleteDoc(doc(db,"chat",id))}catch(x){$$("ce").textContent="Não foi possível apagar."}};
+$$("chf").onsubmit=async e=>{e.preventDefault();const u=auth.currentUser,t=$$("chi").value.trim(),er=$$("che");er.textContent="";
+  if(!u)return go("login");if(!t)return;if(Date.now()-ult<3000)return er.textContent="Espere alguns segundos entre as mensagens.";ult=Date.now();
+  try{await addDoc(collection(db,"chat"),{uid:u.uid,nome:(u.displayName||"Leitor").slice(0,40),foto:foto||"",texto:t.slice(0,500),criado:serverTimestamp()});$$("chi").value=""}
+  catch(x){er.textContent="Não foi possível enviar ("+(x.code||x.message||"erro")+"). Confira se as regras do Firebase foram publicadas."}};
+$$("chl").onclick=async e=>{const id=e.target.dataset&&e.target.dataset.d;if(!id||!confirm("Apagar esta mensagem?"))return;try{await deleteDoc(doc(db,"chat",id))}catch(x){$$("che").textContent="Não foi possível apagar."}};
