@@ -47,11 +47,11 @@ window.isA=()=>!!UID&&ROLE==="admin";
 async function loadObras(){
   const cur=WID.length?stateIds():readLocal(),cid=WID[S.cur];
   const snap=await getDocs(query(collection(db,C.obras),orderBy("updatedAt","desc")));
-  [W,G,ST,U,SY,WID,CL].forEach(a=>{a.length=0});Object.keys(CP).forEach(k=>delete CP[k]);
+  [W,G,ST,U,SY,WID,CL,TS].forEach(a=>{a.length=0});Object.keys(CP).forEach(k=>delete CP[k]);
   snap.docs.forEach((d,i)=>{const o=d.data();WID.push(d.id);
     const nums=Array.isArray(o.chNums)?o.chNums.slice().sort((a,b)=>a-b):Array.from({length:o.chapters||0},(_,k)=>k+1);CL.push(nums);
     W.push([o.title||"Sem título",o.cover?"url("+o.cover+") center/cover":GR[i%GR.length],o.rating||"—",nums.length]);
-    G.push(o.genre||"Fantasia");ST.push(o.status||"Em lançamento");SY.push(o.synopsis||"");U.push(snap.size-i)});
+    G.push(o.genre||"Fantasia");ST.push(o.status||"Em lançamento");SY.push(o.synopsis||"");U.push(snap.size-i);TS.push(o.updatedAt&&o.updatedAt.toMillis?o.updatedAt.toMillis():0)});
   LN.length=0;for(let i=0;i<Math.min(4,W.length);i++)LN.push(i);
   applyState(cur);const k=WID.indexOf(cid);S.cur=k>-1?k:0;
 }
