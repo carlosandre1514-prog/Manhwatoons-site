@@ -1,4 +1,4 @@
-// Chat da comunidade: ícone de balão no topo esquerdo, mensagens em tempo real.
+// Chat da comunidade: botão na barra de baixo; sino de notificações no topo esquerdo, mensagens em tempo real.
 import {getApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {getFirestore,collection,doc,getDoc,addDoc,deleteDoc,query,where,orderBy,limit,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
@@ -16,9 +16,11 @@ const st=document.createElement("style");st.textContent=`
 body.chatting footer{display:none}body.kb .bot{display:none}.ch-p{display:none;position:relative;background:#0e0e0e;border:1px solid #00e05c;border-radius:14px;padding:10px 38px 10px 12px;margin-bottom:8px;font-size:14px;line-height:1.35;overflow-wrap:anywhere;max-height:28vh;overflow-y:auto;flex:none}.ch-p b{color:#00e05c;display:block;font-size:12px;margin-bottom:2px}.ch-p button{position:absolute;top:6px;right:8px;background:none;border:0;color:#b3b3b3;font-size:16px;cursor:pointer;padding:4px}.ch-v{color:#b3b3b3;text-align:center;margin:auto}`;
 document.head.append(st);
 
-const btn=Object.assign(document.createElement("button"),{id:"chb",title:"Chat da comunidade"});btn.setAttribute("aria-label","Chat da comunidade");
-btn.innerHTML='<svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
-btn.onclick=()=>{go("chat")};document.querySelector("header").prepend(btn);
+const btn=Object.assign(document.createElement("button"),{id:"chb",title:"Notificações"});btn.setAttribute("aria-label","Notificações");
+btn.innerHTML='<svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
+const nt=document.createElement("div");nt.id="ntp";nt.hidden=true;nt.style.cssText="position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 62px);z-index:20;background:#0e0e0e;border:1px solid #262626;border-radius:14px;padding:14px 16px;font-size:14px;color:#f4f4f4;max-width:calc(100vw - 24px)";nt.innerHTML="<b>Notificações</b><p style='margin:6px 0 0;color:#9a9a9a'>Nenhuma notificação nova.</p>";document.body.append(nt);
+btn.onclick=e=>{e.stopPropagation();nt.hidden=!nt.hidden};document.addEventListener("click",e=>{if(!nt.hidden&&!nt.contains(e.target))nt.hidden=true});
+document.querySelector("header").prepend(btn);
 
 const sec=document.createElement("section");sec.className="v";sec.id="chat";$$("adm").after(sec);
 sec.innerHTML='<h2 class="ch-t">Comunidade</h2><div class="ch-p" id="chp"></div><div class="ch-l" id="chl"></div><form class="ch-f" id="chf"><input class="ch-i" id="chi" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem…"><button class="ch-s" type="submit">Enviar</button></form><div class="ch-e" id="che"></div>';
