@@ -34,7 +34,7 @@ var TX=["A espada não escolhe o forte.","Escolhe quem não desiste.","Levante. 
 var VS=["home","obra","leitor","lib","busca","perfil","suporte","adm","login","cadastro","recuperar","termos","aform","erro"];
 function ld(){try{return JSON.parse(localStorage.getItem("mt"))||{}}catch(e){return {}}}
 function sv(o){try{localStorage.setItem("mt",JSON.stringify(o))}catch(e){}}
-var P=ld();P.fav=[];P.last={w:-1,c:1};P.pr={};
+var P=ld();P.fav=[];P.last={w:-1,c:1};P.pr={};P.pf={};
 var TS=[],LM=0;
 function ago(t){if(!t)return"";var s=Math.max(0,Math.floor((Date.now()-t)/1e3));if(s<60)return"agora";var m=Math.floor(s/60);if(m<60)return"há "+m+" min";var h=Math.floor(m/60);if(h<24)return"há "+h+" h";var d=Math.floor(h/24);if(d<7)return"há "+d+(d===1?" dia":" dias");var w=Math.floor(d/7);if(d<30)return"há "+w+(w===1?" semana":" semanas");var o=Math.floor(d/30);if(d<365)return"há "+o+(o===1?" mês":" meses");var y=Math.floor(d/365);return"há "+y+(y===1?" ano":" anos")}
 setInterval(function(){[].forEach.call(document.querySelectorAll(".ago"),function(e){e.textContent=ago(+e.dataset.ts)})},15000);
@@ -54,12 +54,12 @@ document.addEventListener("click",function(e){var b=e.target.closest("[data-go],
 function home(){var v=V();
 $("pop").innerHTML=v.slice(0,12).map(function(i,r){var w=W[i];return '<button class="card" data-go="obra" data-w="'+i+'"><div style="position:relative"><span class="rk">'+(r+1)+'</span>'+cv(w,i)+'</div><div class="nm">'+esc(w[0])+'</div><div class="m"><svg><use href="#i-star"/></svg>'+w[2]+'</div></button>'}).join("");
 $("new").innerHTML=v.slice(0,NC()).map(function(i,r){var w=W[i];return '<button class="li" data-go="leitor" data-w="'+i+'" data-cap="'+Math.max(1,w[3])+'">'+cv(w,i)+'<div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+lb(i,Math.max(1,w[3]))+' · <span class="ago" data-ts="'+(TS[i]||0)+'">'+ago(TS[i])+'</span></span></div>'+(TS[i]&&Date.now()-TS[i]<864e5?'<span class="new">Novo</span>':'')+'</button>'}).join("");
-var l=P.last,w=W[l.w],c=$("cont");c.hidden=!w||!!w[4];if(!c.hidden)c.innerHTML='<div class="cv" style="--g:'+w[1]+'"></div><div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+l.c+' · '+Math.min(100,Math.round(l.c/Math.max(1,w[3])*100))+'% lido</span><div class="pg"><i style="width:'+Math.min(100,Math.round(l.c/Math.max(1,w[3])*100))+'%"></i></div></div><svg><use href="#i-play"/></svg>'}
+var l=P.last,w=W[l.w],c=$("cont");c.hidden=!w||!!w[4];if(!c.hidden)c.innerHTML='<div class="cv" style="--g:'+w[1]+'"></div><div class="t"><b>'+esc(w[0])+'</b><span>Capítulo '+lb(l.w,l.c)+' · '+pcn(l.w)+'% lido</span><div class="pg"><i style="width:'+pcn(l.w)+'%"></i></div></div><svg><use href="#i-play"/></svg>'}
 function ob(){var i=S.cur,w=W[i];if(!w||w[4])return fail("Obra não encontrada","Essa obra foi removida.");
 $("oc").style.setProperty("--g",w[1]);$("oc").innerHTML='<b>'+esc(w[0])+'</b>';$("og").innerHTML='<span class="tag">'+esc(G[i])+'</span><span class="tag">'+ST[i]+'</span>';$("ot").textContent=w[0];$("os").textContent=SY[i]||"Sem sinopse ainda.";
 $("ost").innerHTML='<div><b>'+w[2]+'</b>nota</div><div><b>'+w[3]+'</b>capítulos</div>';
-var f=P.fav.indexOf(i)>-1,pr=P.pr[i];$("ofv").innerHTML='<svg><use href="#i-heart"/></svg>'+(f?"Favoritado":"Favoritar");$("ofv").style.color=f?"var(--gold)":"var(--tx)";
-$("ol").dataset.cap=pr||1;$("ol").textContent=pr?"Continuar (cap. "+pr+")":"Começar a ler";
+var f=P.fav.indexOf(i)>-1,pr=P.pf[i];$("ofv").innerHTML='<svg><use href="#i-heart"/></svg>'+(f?"Favoritado":"Favoritar");$("ofv").style.color=f?"var(--gold)":"var(--tx)";
+var cc=pr?Math.min(Math.max(1,W[i][3]),Math.floor(pr)+1):1;$("ol").dataset.cap=cc;$("ol").textContent=pr?"Continuar (cap. "+lb(i,cc)+")":"Começar a ler";
 var n=w[3],h="";if(S.ob!==i){S.ob=i;S.cn=12}for(var c=n;c>Math.max(0,n-S.cn);c--)h+='<button class="ch" data-go="leitor" data-cap="'+c+'"><span>Capítulo '+lb(i,c)+'</span><small>'+(c===n?"mais recente":"")+'</small></button>';
 $("caps").innerHTML=(h||'<div class="emp"><b>Ainda sem capítulos</b>Volte em breve.</div>')+(n>S.cn?'<button class="mini" id="cmore" style="margin-top:12px">Mostrar mais capítulos</button>':'')}
 $("caps").onclick=function(e){if(e.target.id==="cmore"){S.cn+=12;ob()}};
@@ -69,7 +69,15 @@ function pgh(x,n,k){return x.u?'<img class="pi" loading="lazy" decoding="async" 
 function blk(n){return '<section class="chb" data-c="'+n+'" aria-label="Capítulo '+lb(S.cur,n)+'"><h3 class="chh">Capítulo '+lb(S.cur,n)+'</h3>'+it(n).map(function(x,k){return pgh(x,n,k)}).join("")+'</section>'}
 var so=null,co=null;
 function stop(){if(so)so.disconnect();if(co)co.disconnect();so=co=null}
-function meta(){var w=W[S.cur],a=it().length;$("rt").textContent="Cap. "+lb(S.cur,S.cap)+" · "+w[0];$("rc").textContent=(S.md==="p"?"pág. "+(S.pg+1)+"/"+a+" · ":"")+S.cap+" / "+w[3];P.last={w:S.cur,c:S.cap};P.pr[S.cur]=S.cap;sv(P)}
+function meta(){var w=W[S.cur],a=it().length;$("rt").textContent="Cap. "+lb(S.cur,S.cap)+" · "+w[0];$("rc").textContent=(S.md==="p"?"pág. "+(S.pg+1)+"/"+a+" · ":"")+S.cap+" / "+w[3];P.last={w:S.cur,c:S.cap};sv(P)}
+var TG=1.5,TMIN=8,T0={},DN={};
+function pcn(i){return Math.min(100,Math.floor((P.pf[i]||0)/Math.max(1,W[i][3])*100))}
+function setProg(i,c,f){var v=(c-1)+Math.max(0,Math.min(1,f)),m=W[i][3];if(v>(P.pf[i]||0)){P.pf[i]=Math.min(v,m);sv(P)}}
+function chk(i,c,f,np,fim){var k=i+"-"+c;if(!T0[k])T0[k]=Date.now();if(fim&&Date.now()-T0[k]<Math.max(TMIN,np*TG)*1e3)fim=false;if(!fim)f=Math.min(f,.99);setProg(i,c,f);if(fim&&!DN[k]){DN[k]=1;window.dispatchEvent(new CustomEvent("capfim",{detail:{w:i,c:c}}))}}
+function trk(){var w=W[S.cur];if(!$("leitor").classList.contains("on")||!w||w[3]<1)return;
+if(S.md==="r"){[].forEach.call(document.querySelectorAll("#pnl .chb"),function(b){var r=b.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;var im=b.querySelectorAll("img.pi"),ok=true;[].forEach.call(im,function(x){if(!x.complete||!x.naturalHeight)ok=false});var f=Math.max(0,Math.min(1,(innerHeight-r.top)/Math.max(1,r.height))),fim=ok&&r.bottom<=innerHeight+8&&f>=1;chk(S.cur,+b.dataset.c,fim?1:f,im.length,fim)})}
+else{var a=it();chk(S.cur,S.cap,(S.pg+1)/a.length,a.length,S.pg>=a.length-1)}}
+var tk=0;addEventListener("scroll",function(){if(!tk)tk=setTimeout(function(){tk=0;trk()},250)},{passive:true});setInterval(trk,2000);
 function more(){var w=W[S.cur],box=$("pnl");if(S.md!=="r")return;if(S.ld>=w[3]){if(!box.querySelector(".fim"))box.insertAdjacentHTML("beforeend",'<p class="fim">Você leu tudo por enquanto. Novos capítulos em breve.</p>');return}S.ld++;box.insertAdjacentHTML("beforeend",blk(S.ld));if(co)co.observe(box.lastElementChild);if(so){so.unobserve($("sent"));so.observe($("sent"))}}
 function rl(){stop();var w=W[S.cur];if(!w||w[4])return fail("Obra não encontrada","Essa obra foi removida.");
 if(w[3]<1){$("pnl").innerHTML='<div class="emp"><b>Sem capítulos ainda</b>Esta obra ainda não tem páginas.</div>';$("sent").hidden=true;$("rt").textContent=w[0];$("rc").textContent="";return}
@@ -91,8 +99,8 @@ $("bc").textContent=L.length+(L.length===1?" resultado":" resultados");
 $("bp").innerHTML=pgs>1?'<button class="mini" id="bpp"'+(BP?'':' disabled')+'>Anterior</button><span>Página '+(BP+1)+' de '+pgs+'</span><button class="mini" id="bpn"'+(BP<pgs-1?'':' disabled')+'>Próxima</button>':''}
 $("bf").innerHTML=["Todos","Lançamentos","Fantasia","Ação","Aventura","Drama"].map(function(c,i){return '<button class="'+(i?'':'on')+'">'+c+'</button>'}).join("");
 function tab(n){var t=$("tabs");t.style.display=LM?"":"none";document.querySelector("#lib h2").textContent=LM?"Favoritos":"Biblioteca";[].forEach.call(t.children,function(b,i){b.classList.toggle("on",i===n)});
-var v=V(),fv=P.fav.filter(function(i){return v.indexOf(i)>-1}),pc=function(i){return Math.min(100,Math.round((P.pr[i]||0)/Math.max(1,W[i][3])*100))};
-var rd=v.filter(function(i){return(P.pr[i]||0)>0&&pc(i)<100}),dn=v.filter(function(i){return W[i][3]>0&&pc(i)>=100});
+var v=V(),fv=P.fav.filter(function(i){return v.indexOf(i)>-1}),pc=pcn;
+var rd=v.filter(function(i){return(P.pf[i]||0)>0&&pc(i)<100}),dn=v.filter(function(i){return W[i][3]>0&&pc(i)>=100});
 var em=function(b,m){return'<div class="emp" style="grid-column:1/-1"><b>'+b+'</b>'+m+'</div>'},L=function(a,e){return a.length?a.map(function(i){return cd(i,pc(i))}).join(""):e};
 $("gr").innerHTML=!LM?L(v,em("Nenhuma obra ainda","As obras publicadas aparecem aqui.")):n===0?L(rd,em("Nada em leitura","Comece a ler uma obra e ela aparece aqui.")):n===1?L(fv,em("Nenhum favorito ainda","Toque no coração de uma obra para salvar aqui.")):L(dn,em("Nada concluído ainda","Termine uma obra e ela aparece aqui."));
 $("sfv").textContent=fv.length;$("pfn").textContent=fv.length}
