@@ -2,6 +2,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,updateProfile,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,query,where,orderBy,limit,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 import {SIGNER_URL,ADMIN_EMAIL} from "./config.js";
+import {mdPages} from "./mdapi.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBesrTVJe5iOqc21bOOco6Cx91gmnt1qf4",
@@ -44,6 +45,7 @@ function persist(){
 }
 window.sv=persist;window.WID=WID;
 window.isA=()=>!!UID&&ROLE==="admin";
+window.recarregarObras=async()=>{await loadObras();refresh();await loadAdm()};
 
 /* ---------- obras e capítulos ---------- */
 async function loadObras(){
@@ -59,7 +61,7 @@ async function loadObras(){
 }
 async function loadCap(w,n){
   const k=w+"-"+n;if(CP[k]||!WID[w])return;
-  try{const d=await getDoc(doc(db,C.obras,WID[w],"capitulos",String(lb(w,n))));const p=d.exists()?d.data().pages||[]:[];if(p.length)CP[k]=p}catch(e){}
+  try{const d=await getDoc(doc(db,C.obras,WID[w],"capitulos",String(lb(w,n))));const x=d.exists()?d.data():{};let p=x.pages||[];if(!p.length&&x.md)p=await mdPages(x.md);if(p.length)CP[k]=p}catch(e){}
 }
 const rl0=window.rl;
 window.rl=async function(){
