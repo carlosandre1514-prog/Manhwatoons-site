@@ -36,7 +36,7 @@ async function upl(folder,name,f,scope){
 
 /* ---------- foto de perfil ---------- */
 const pa=$$("pa"),inp=Object.assign(document.createElement("input"),{type:"file",accept:"image/*",hidden:true});document.body.append(inp);
-function showFoto(u){FOTO=u||"";pa.style.background=u?`url(${u}) center/cover`:"";pa.style.color=u?"transparent":""}
+function showFoto(u){FOTO=u||"";pa.style.background=u?`url(${u}) center/cover`:"";pa.style.color=u?"transparent":"";try{mostrarXP()}catch(e){}}
 pa.style.cursor="pointer";pa.title="Trocar foto";
 pa.onclick=()=>auth.currentUser?inp.click():alert("Entre na sua conta para colocar uma foto.");
 inp.onchange=async()=>{const f=inp.files[0],u=auth.currentUser;inp.value="";if(!f||!u)return;
@@ -72,14 +72,26 @@ const PASSO=L=>L<=400?"Primeiro Passo · Reino Mortal e Espiritual":L<=480?"Fron
 const xpPara=L=>Math.round(30*Math.pow(L-1,1.4));
 function nivel(x){x=Math.max(0,x||0);let L=Math.min(1000,Math.floor(Math.pow(x/30,1/1.4))+1);while(L<1000&&x>=xpPara(L+1))L++;while(L>1&&x<xpPara(L))L--;return L}
 function info(L){for(const r of R)for(const e of r[1])if(L>=e[1]&&L<=e[2])return{reino:r[0],estagio:e[0]};return{reino:"",estagio:""}}
+const VIS=[["#7dd3a8","#12372c","mist"],["#d9a066","#3a2412","mist"],["#ffd24a","#4a2e08","orb"],["#8fd3ff","#14295e","orb"],["#b79cff","#2c1a66","rings"],["#6fe3e0","#0f3447","rings"],["#ffd27a","#5a2a0c","rings"],["#a9b6d8","#151a33","yin"],["#ffb45c","#5a1a0c","yang"],["#ff9ec7","#4a1440","lotus"],["#7be0ff","#1b2260","lotus"],["#d6c2ff","#0c0820","void"],["#e6f0ff","#16327a","bolt"],["#66ffd9","#06302d","dao"],["#c58bff","#210a4a","star"],["#ff7a7a","#35091a","bolt"],["#ffe9a8","#4a3606","dao"],["#ffffff","#10301f","halo"],["#ffd76a","#1a0f00","apex"]];
+const escN=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const urlOk=u=>/^https:\/\/[^\s'"()<>\\]+$/.test(u||"")?u:"";
+function nvA(L,prog){let i=0,j=0;for(let a=0;a<R.length;a++)for(let b=0;b<R[a][1].length;b++){const e=R[a][1][b];if(L>=e[1]&&L<=e[2]){i=a;j=b}}
+  const st=R[i][1],n=st.length,pico=(j===n-1&&n>1)||L===1000,t=n>1?Math.round(j/(n-1)*3):3,v=VIS[i],s=Math.max(0,Math.min(1,prog||0));
+  return{fx:v[2],cls:pico?" nc-pico":"",rk:R[i][0]+" · "+st[j][0],t,st:`--a:${v[0]};--b:${v[1]};--t:${t};--p:${pico?1:0};--s:${s.toFixed(3)}`}}
+const avN=(nome,foto)=>{const f=urlOk(foto);return f?`<div class="nc-av" style="background-image:url('${f}')"></div>`:`<div class="nc-av">${escN((nome||"?")[0].toUpperCase())}</div>`};
+function cardNivel(L,nome,foto,prog){const k=nvA(L,prog);
+  return `<div class="nc${k.cls}" data-fx="${k.fx}" style="${k.st}">${avN(nome,foto)}<div class="nc-tx"><div class="nc-nm">${escN(nome||"Leitor")}</div><div class="nc-rk">${k.rk}</div><div class="nc-sb"><i></i></div></div><div class="nc-rt"><div class="nc-nv">Nv. ${L}</div><div class="nc-pp">${[0,1,2,3].map(q=>`<b class="${q<=k.t?"on":""}"></b>`).join("")}</div></div></div>`}
+/* mensagem do chat: banner com foto, nick, nível + estágio ao lado do nick, texto, hora e (se puder) apagar */
+function msgNivel(xp,nome,foto,texto,hora,delId){xp=Math.max(0,+xp||0);const L=nivel(xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1),k=nvA(L,L>=1000?1:(xp-a)/(b-a));
+  return `<div class="nc nc-ch${k.cls}" data-fx="${k.fx}" style="${k.st}">${avN(nome,foto)}<div class="nc-tx"><div class="nc-hd"><span class="nc-nm">${escN(nome||"Leitor")}</span><span class="nc-lv">Nv. ${L} · ${k.rk}</span></div><div class="nc-msg">${escN(texto||"")}</div><div class="nc-mt"><span>${escN(hora||"")}</span>${delId?`<button class="nc-x" data-d="${escN(delId)}" aria-label="Apagar">✕</button>`:""}</div></div></div>`}
 let XP={xp:0,dia:"",n:0,ld:""};
-window.XPX={nivel,info,xp:()=>XP.xp};
+window.XPX={nivel,info,xp:()=>XP.xp,msg:msgNivel};
 function toast(t){let e=$$("xpt");if(!e){e=document.createElement("div");e.id="xpt";e.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#0e0e0e;border:1px solid #00e05c;color:#f4f4f4;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis";document.body.append(e)}e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity=0,3200)}
-const xc=document.createElement("div");xc.id="xpc";xc.style.cssText="display:none;background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:14px 0";
-xc.innerHTML='<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b id="xn" style="font-size:20px"></b><span id="xe" style="color:var(--mu);font-size:13px"></span></div><div id="xr" style="font-size:14px;margin:2px 0 8px"></div><div class="pg"><i id="xb" style="width:0"></i></div><div id="xs" style="color:var(--mu);font-size:12px;margin-top:6px"></div>';
+const xc=document.createElement("div");xc.id="xpc";xc.style.cssText="display:none;margin:14px 0";
+xc.innerHTML='<div id="xcard"></div><div style="display:flex;justify-content:space-between;gap:8px;color:var(--mu);font-size:12px;margin-top:8px"><span id="xs"></span><span id="xe"></span></div>';
 document.querySelector("#perfil .pf").after(xc);
-function mostrarXP(){const u=auth.currentUser;xc.style.display=u?"":"none";if(!u)return;const L=nivel(XP.xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1),i=info(L);
-  $$("xn").textContent="Nível "+L;$$("xe").textContent=L>=1000?XP.xp+" XP · máximo":(XP.xp-a)+" / "+(b-a)+" XP";$$("xr").textContent=i.reino+" · "+i.estagio;$$("xb").style.width=(L>=1000?100:Math.min(100,(XP.xp-a)/(b-a)*100))+"%";$$("xs").textContent=PASSO(L)}
+function mostrarXP(){const u=auth.currentUser;xc.style.display=u?"":"none";if(!u)return;const L=nivel(XP.xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1);
+  $$("xcard").innerHTML=cardNivel(L,u.displayName||"Leitor",FOTO,L>=1000?1:(XP.xp-a)/(b-a));$$("xe").textContent=L>=1000?XP.xp+" XP · máximo":(XP.xp-a)+" / "+(b-a)+" XP";$$("xs").textContent=PASSO(L)}
 async function darXP(mk,r,campos,txt){const u=auth.currentUser;if(!u||!r)return;const antes=nivel(XP.xp);
   try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,"niveis",u.uid),{xp:increment(r),mk,...campos},{merge:true});await b.commit();
     Object.assign(XP,campos);XP.xp+=r;mostrarXP();const L=nivel(XP.xp);toast(L>antes?"Nível "+L+" · "+info(L).reino:"+"+r+" XP · "+txt)}catch(e){}}
