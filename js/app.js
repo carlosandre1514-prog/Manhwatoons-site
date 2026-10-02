@@ -1,7 +1,7 @@
 // Interface do Manhwa Toons (telas, leitor, painel ADM). Os dados vêm de js/firebase.js
 var W=[],CL=[];function lb(w,i){var a=CL[w];return a&&a[i-1]!==undefined?a[i-1]:i}
 var $=function(i){return document.getElementById(i)};
-var NAV=[["home","Início","i-home"],["lib","Biblioteca","i-book"],["lib","Favoritos","i-heart"],["perfil","Perfil","i-user"]];
+var NAV=[["home","Início","i-home"],["lib","Biblioteca","i-book"],["lib","Favoritos","i-heart"],["jornada","Jornada","i-star"],["perfil","Perfil","i-user"]];
 function nav(){var t="",b="";NAV.forEach(function(n,i){t+='<button data-go="'+n[0]+'" data-i="'+i+'">'+n[1]+'</button>';b+='<button data-go="'+n[0]+'" data-i="'+i+'"><svg><use href="#'+n[2]+'"/></svg>'+n[1]+'</button>'});$("top").innerHTML=t+'<button data-go="busca">Explorar</button>';$("bot").innerHTML=b}
 
 $("chips").innerHTML=["Todos","Fantasia","Ação","Romance","Terror","Isekai"].map(function(c,i){return '<button class="'+(i?'':'on')+'">'+c+'</button>'}).join("");
@@ -31,7 +31,7 @@ var S={cur:0,cap:12,pg:0,md:"r",email:""},LN=[0,1],CP={},FD={ed:-1,imgs:[],k:"o"
 var SY=[];
 var GR=["linear-gradient(160deg,#3a3a3a,#050505)","linear-gradient(160deg,#0d4d2b,#020a05)","linear-gradient(160deg,#2b5d5a,#0a1a22)","linear-gradient(160deg,#5b2a4a,#150c1f)"];
 var TX=["A espada não escolhe o forte.","Escolhe quem não desiste.","Levante. Mais uma vez.","O aço lembra cada golpe.","Ainda há estrelas no céu."];
-var VS=["home","obra","leitor","lib","busca","perfil","suporte","adm","login","cadastro","recuperar","termos","aform","erro"];
+var VS=["home","obra","leitor","lib","busca","perfil","jornada","suporte","adm","login","cadastro","recuperar","termos","aform","erro"];
 function ld(){try{return JSON.parse(localStorage.getItem("mt"))||{}}catch(e){return {}}}
 function sv(o){try{localStorage.setItem("mt",JSON.stringify(o))}catch(e){}}
 var P=ld();P.fav=[];P.last={w:-1,c:1};P.pr={};P.pf={};
@@ -47,7 +47,7 @@ function go(v,i){
 if((v==="adm"||v==="aform")&&!isA())return fail("Acesso restrito","Só administradores acessam o painel. Entre com uma conta de administrador.");
 if(v==="leitor"&&!navigator.onLine)return fail("Sem conexão","Verifique sua internet e tente de novo.");
 document.querySelectorAll(".v").forEach(function(x){x.classList.toggle("on",x.id===v)});
-var k=v==="lib"?(i||1):0;if(v==="login"||v==="cadastro"||v==="busca"||v==="erro"||v==="termos"||v==="recuperar")k=-1;if(v==="perfil"||v==="adm"||v==="suporte")k=3;
+var k=v==="lib"?(i||1):0;if(v==="login"||v==="cadastro"||v==="busca"||v==="erro"||v==="termos"||v==="recuperar")k=-1;if(v==="jornada")k=3;if(v==="perfil"||v==="adm"||v==="suporte")k=4;
 if(v==="lib"){LM=i==2?1:0;tab(LM?1:0)}if(v==="home")home();if(v==="obra")ob();if(v==="leitor")rl();if(v==="adm")ar();if(v==="perfil")$("radm").hidden=!isA();
 document.querySelectorAll("#top button,#bot button").forEach(function(b){var on=+b.dataset.i===k;b.classList.toggle("on",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});window.scrollTo(0,0);ap();if(fs0)fs0=0;else $("mn").focus({preventScroll:true})}
 document.addEventListener("click",function(e){var b=e.target.closest("[data-go],[data-cap]");if(!b)return;var d=b.dataset;if(d.w!==undefined)S.cur=+d.w;if(d.cap!==undefined)S.cap=+d.cap;if(d.last){S.cur=P.last.w;S.cap=P.last.c}S.pg=0;go(d.go||"leitor",d.i)});
