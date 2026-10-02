@@ -27,18 +27,20 @@ const readLocal=()=>{try{return JSON.parse(localStorage.getItem("mt2"))||{}}catc
 /* ---------- favoritos e progresso (guardados por id da obra) ---------- */
 function stateIds(){
   const pr={};Object.keys(P.pr).forEach(i=>{if(WID[+i])pr[WID[+i]]=P.pr[i]});
-  return {fav:P.fav.map(i=>WID[i]).filter(Boolean),pr,last:WID[P.last.w]?{id:WID[P.last.w],c:P.last.c}:null};
+  const pf={};Object.keys(P.pf).forEach(i=>{if(WID[+i])pf[WID[+i]]=P.pf[i]});
+  return {fav:P.fav.map(i=>WID[i]).filter(Boolean),pr,pf,last:WID[P.last.w]?{id:WID[P.last.w],c:P.last.c}:null};
 }
 function applyState(st){
   st=st||{};
   P.fav=(st.fav||[]).map(id=>WID.indexOf(id)).filter(i=>i>-1);
   P.pr={};Object.keys(st.pr||{}).forEach(id=>{const i=WID.indexOf(id);if(i>-1)P.pr[i]=st.pr[id]});
+  P.pf={};Object.keys(st.pf||{}).forEach(id=>{const i=WID.indexOf(id);if(i>-1)P.pf[i]=st.pf[id]});
   const l=st.last,i=l?WID.indexOf(l.id):-1;P.last=i>-1?{w:i,c:l.c}:{w:-1,c:1};
 }
 function persist(){
   const st=stateIds();
   try{localStorage.setItem("mt2",JSON.stringify(st))}catch(e){}
-  if(UID){clearTimeout(pt);pt=setTimeout(()=>updateDoc(doc(db,C.users,UID),{fav:st.fav,pr:st.pr,last:st.last}).catch(()=>{}),1500)}
+  if(UID){clearTimeout(pt);pt=setTimeout(()=>updateDoc(doc(db,C.users,UID),{fav:st.fav,pr:st.pr,pf:st.pf,last:st.last}).catch(()=>{}),1500)}
 }
 window.sv=persist;window.WID=WID;
 window.isA=()=>!!UID&&ROLE==="admin";
@@ -253,8 +255,8 @@ function hero(){
   $("hh").textContent=W[0][0];$("hg").innerHTML='<span class="tag">'+esc(G[0])+'</span><span class="tag">'+ST[0]+'</span>';$("hp").textContent=(SY[0]||"").slice(0,160);
 }
 function stats(){
-  $("s1").textContent=Object.keys(P.pr).length;
-  $("s2").textContent=Object.keys(P.pr).reduce((a,k)=>a+P.pr[k],0);
+  $("s1").textContent=Object.keys(P.pf).filter(k=>P.pf[k]>0).length;
+  $("s2").textContent=Object.keys(P.pf).reduce((a,k)=>a+Math.floor(P.pf[k]),0);
   $("s3").textContent=auth.currentUser?new Date(auth.currentUser.metadata.creationTime).getFullYear():"—";
 }
 function refresh(){
