@@ -75,11 +75,13 @@ function info(L){for(const r of R)for(const e of r[1])if(L>=e[1]&&L<=e[2])return
 const VIS=[["#7dd3a8","#12372c","mist"],["#d9a066","#3a2412","mist"],["#ffd24a","#4a2e08","orb"],["#8fd3ff","#14295e","orb"],["#b79cff","#2c1a66","rings"],["#6fe3e0","#0f3447","rings"],["#ffd27a","#5a2a0c","rings"],["#a9b6d8","#151a33","yin"],["#ffb45c","#5a1a0c","yang"],["#ff9ec7","#4a1440","lotus"],["#7be0ff","#1b2260","lotus"],["#d6c2ff","#0c0820","void"],["#e6f0ff","#16327a","bolt"],["#66ffd9","#06302d","dao"],["#c58bff","#210a4a","star"],["#ff7a7a","#35091a","bolt"],["#ffe9a8","#4a3606","dao"],["#ffffff","#10301f","halo"],["#ffd76a","#1a0f00","apex"]];
 const escN=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const urlOk=u=>/^https:\/\/[^\s'"()<>\\]+$/.test(u||"")?u:"";
-function nvA(L,prog){let i=0,j=0;for(let a=0;a<R.length;a++)for(let b=0;b<R[a][1].length;b++){const e=R[a][1][b];if(L>=e[1]&&L<=e[2]){i=a;j=b}}
-  const st=R[i][1],n=st.length,pico=(j===n-1&&n>1)||L===1000,t=n>1?Math.round(j/(n-1)*3):3,v=VIS[i],s=Math.max(0,Math.min(1,prog||0));
-  return{fx:v[2],cls:pico?" nc-pico":"",rk:R[i][0]+" · "+st[j][0],t,st:`--a:${v[0]};--b:${v[1]};--t:${t};--p:${pico?1:0};--s:${s.toFixed(3)}`}}
+const stV=(i,t,p,s)=>`--a:${VIS[i][0]};--b:${VIS[i][1]};--t:${t};--p:${p};--s:${(+s).toFixed(3)}`;
+function rIdx(L){for(let a=0;a<R.length;a++)if(L<=R[a][1][R[a][1].length-1][2])return a;return R.length-1}
+function nvA(L,prog,vi){let i=0,j=0;for(let a=0;a<R.length;a++)for(let b=0;b<R[a][1].length;b++){const e=R[a][1][b];if(L>=e[1]&&L<=e[2]){i=a;j=b}}
+  const cur=vi==null||vi===i,st=R[i][1],n=st.length,pico=cur&&((j===n-1&&n>1)||L===1000),t=cur?(n>1?Math.round(j/(n-1)*3):3):2,sv=cur?Math.max(0,Math.min(1,prog||0)):1,k=cur?i:vi;
+  return{fx:VIS[k][2],cls:pico?" nc-pico":"",rk:R[i][0]+" · "+st[j][0],t,st:stV(k,t,pico?1:0,sv)}}
 const avN=(nome,foto)=>{const f=urlOk(foto);return f?`<div class="nc-av" style="background-image:url('${f}')"></div>`:`<div class="nc-av">${escN((nome||"?")[0].toUpperCase())}</div>`};
-function cardNivel(L,nome,foto,prog){const k=nvA(L,prog);
+function cardNivel(L,nome,foto,prog,vi){const k=nvA(L,prog,vi);
   return `<div class="nc${k.cls}" data-fx="${k.fx}" style="${k.st}">${avN(nome,foto)}<div class="nc-tx"><div class="nc-nm">${escN(nome||"Leitor")}</div><div class="nc-rk">${k.rk}</div><div class="nc-sb"><i></i></div></div><div class="nc-rt"><div class="nc-nv">Nv. ${L}</div><div class="nc-pp">${[0,1,2,3].map(q=>`<b class="${q<=k.t?"on":""}"></b>`).join("")}</div></div></div>`}
 /* mensagem do chat: banner com foto, nick, nível + estágio ao lado do nick, texto, hora e (se puder) apagar */
 function msgNivel(xp,nome,foto,texto,hora,delId){xp=Math.max(0,+xp||0);const L=nivel(xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1),k=nvA(L,L>=1000?1:(xp-a)/(b-a));
@@ -89,13 +91,33 @@ window.XPX={nivel,info,xp:()=>XP.xp,msg:msgNivel};
 function toast(t){let e=$$("xpt");if(!e){e=document.createElement("div");e.id="xpt";e.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:#0e0e0e;border:1px solid #00e05c;color:#f4f4f4;border-radius:999px;padding:10px 18px;font-weight:700;font-size:14px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis";document.body.append(e)}e.textContent=t;e.style.opacity=1;clearTimeout(e._t);e._t=setTimeout(()=>e.style.opacity=0,3200)}
 const xc=document.createElement("div");xc.id="xpc";xc.style.cssText="display:none;margin:14px 0";
 xc.innerHTML='<div id="xcard"></div><div style="display:flex;justify-content:space-between;gap:8px;color:var(--mu);font-size:12px;margin-top:8px"><span id="xs"></span><span id="xe"></span></div>';
-document.querySelector("#perfil .pf").after(xc);
-function mostrarXP(){const u=auth.currentUser;xc.style.display=u?"":"none";if(!u)return;const L=nivel(XP.xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1);
-  $$("xcard").innerHTML=cardNivel(L,u.displayName||"Leitor",FOTO,L>=1000?1:(XP.xp-a)/(b-a));$$("xe").textContent=L>=1000?XP.xp+" XP · máximo":(XP.xp-a)+" / "+(b-a)+" XP";$$("xs").textContent=PASSO(L)}
+document.querySelector("#perfil .pf").after(xc);xc.addEventListener("click",e=>{if(e.target.closest(".nc-av"))pa.click()});
+/* ---------- Jornada: login diário, nível e banners ---------- */
+const RW=[10,10,15,15,20,20,50],DN=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"],jr=$$("jornada");let J={dias:[],eq:-1};
+const has=n=>J.dias.includes(dia(n)),unl=i=>R[i][1][0][1];
+const seq=()=>{let n=0,i=has(0)?0:1;while(i<14&&has(i)){n++;i++}return n};
+const eqAtual=L=>J.eq>=0&&unl(J.eq)<=L?J.eq:rIdx(L);
+const salvarJ=()=>setDoc(doc(db,"jornada",auth.currentUser.uid),{dias:J.dias,eq:J.eq},{merge:true});
+async function carregarJ(u){const s=await getDoc(doc(db,"jornada",u.uid)).catch(()=>null),d=s&&s.exists()?s.data():{};J={dias:Array.isArray(d.dias)?d.dias:[],eq:Number.isInteger(d.eq)?d.eq:-1};mostrarXP()}
+async function receber(){const u=auth.currentUser;if(!u||has(0))return;const rw=RW[seq()%7],d=dia(),dias=[...J.dias.filter(x=>x>=dia(13)),d],ant=J.dias;J.dias=dias;
+  try{await salvarJ()}catch(e){J.dias=ant;mostrarJ();return toast("Não foi possível receber agora. Tente de novo.")}
+  await darXP(`x_${d}_${u.uid}`,rw,{ld:d},"Login diário");mostrarXP()}
+function mostrarJ(){const u=auth.currentUser;
+  if(!u){jr.innerHTML='<h1 class="jn-t">Jornada</h1><div class="jn-box"><p>Entre na sua conta para receber o login diário, ganhar XP e desbloquear banners.</p><button class="jn-btn" data-go="login">Entrar</button></div>';return}
+  const x=XP.xp,L=nivel(x),a=xpPara(L),b=L>=1000?a:xpPara(L+1),pc=L>=1000?1:(x-a)/(b-a),eq=eqAtual(L),s=seq(),hj=has(0),idx=(new Date(dia()+"T12:00:00").getDay()+6)%7,rw=RW[s%7],i=info(L);
+  let n=0;const bl=R.map((r,k)=>{const on=unl(k)<=L;n+=on;const e=k===eq;
+    return `<button class="nc jn-mini${on?"":" lk"}${e?" eq":""}" ${on?`data-eq="${k}"`:"disabled"} data-fx="${VIS[k][2]}" style="${stV(k,2,0,1)}">${avN(u.displayName||"Leitor",FOTO)}<div class="nc-tx"><div class="nc-nm">${r[0]}</div><div class="nc-rk">${on?(e?"Equipado":"Toque para equipar"):"Desbloqueia no nível "+unl(k)}</div></div><div class="nc-rt"><div class="nc-nv">${on?(e?"✔":"Equipar"):"🔒 "+unl(k)}</div></div></button>`}).join("");
+  jr.innerHTML=`<h1 class="jn-t">Jornada</h1><div class="jn-box"><div class="jn-hd"><b>Login diário</b><span class="jn-g">🔥 ${s} ${s===1?"dia":"dias"} seguidos</span></div><p class="jn-mu">Entre todo dia para manter a sequência. No 7º dia seguido o prêmio é maior.</p><div class="jn-wk">${DN.map((d,k)=>{const ok=J.dias.includes(dia(idx-k)),h=k===idx;return `<div class="jn-dy${ok?" ok":""}${h?" hj":""}${k>idx?" fu":""}">${d}<b>${ok?"✓":h?"+"+rw:"·"}</b></div>`}).join("")}</div><button class="jn-btn" id="jcl" ${hj?"disabled":""}>${hj?"Hoje já recebido ✓ · volte amanhã":"Receber login de hoje (+"+rw+" XP)"}</button></div>
+<div class="jn-box"><div class="jn-hd"><span class="jn-mu">Seu nível</span><span class="jn-mu">${PASSO(L)}</span></div><div class="jn-big">Nível ${L}</div><div class="jn-g">${i.reino} · ${i.estagio}</div><div class="jn-bar"><i style="width:${pc*100}%"></i></div><div class="jn-hd jn-mu"><span>${L>=1000?x+" XP · máximo":(x-a)+" / "+(b-a)+" XP"}</span><span>Total ${x} XP</span></div></div>
+<div class="jn-hd" style="margin-top:18px"><h2>Banners</h2><span class="jn-mu">${n}/${R.length} desbloqueados</span></div><p class="jn-mu" style="margin:2px 0 8px">Um banner por reino. Toque num desbloqueado para equipar; o anterior é desequipado.</p><div class="jn-bl">${bl}</div>`}
+jr.addEventListener("click",async e=>{if(e.target.closest("#jcl"))return receber();const q=e.target.closest("[data-eq]");if(!q||!auth.currentUser)return;const k=+q.dataset.eq,ant=J.eq;J.eq=k;mostrarXP();try{await salvarJ()}catch(x){J.eq=ant;mostrarXP();toast("Não foi possível salvar o banner.")}});
+new MutationObserver(()=>{if(jr.classList.contains("on"))mostrarJ()}).observe(jr,{attributes:true,attributeFilter:["class"]});
+function mostrarXP(){const u=auth.currentUser;xc.style.display=u?"":"none";if(!u)return mostrarJ();const L=nivel(XP.xp),a=xpPara(L),b=L>=1000?a:xpPara(L+1);
+  $$("xcard").innerHTML=cardNivel(L,u.displayName||"Leitor",FOTO,L>=1000?1:(XP.xp-a)/(b-a),eqAtual(L));$$("xe").textContent=L>=1000?XP.xp+" XP · máximo":(XP.xp-a)+" / "+(b-a)+" XP";$$("xs").textContent=PASSO(L);mostrarJ()}
 async function darXP(mk,r,campos,txt){const u=auth.currentUser;if(!u||!r)return;const antes=nivel(XP.xp);
   try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,"niveis",u.uid),{xp:increment(r),mk,...campos},{merge:true});await b.commit();
     Object.assign(XP,campos);XP.xp+=r;mostrarXP();const L=nivel(XP.xp);toast(L>antes?"Nível "+L+" · "+info(L).reino:"+"+r+" XP · "+txt)}catch(e){}}
-async function carregarXP(u){const s=await getDoc(doc(db,"niveis",u.uid)).catch(()=>null);XP={xp:0,dia:"",n:0,ld:"",...(s&&s.exists()?s.data():{})};mostrarXP();const d=dia();if(XP.ld!==d)await darXP(`x_${d}_${u.uid}`,10,{ld:d},"Login diário")}
+async function carregarXP(u){const s=await getDoc(doc(db,"niveis",u.uid)).catch(()=>null);XP={xp:0,dia:"",n:0,ld:"",...(s&&s.exists()?s.data():{})};mostrarXP();await carregarJ(u)}
 
 /* ---------- contagem de leituras e favoritos ---------- */
 const seen=new Set();
