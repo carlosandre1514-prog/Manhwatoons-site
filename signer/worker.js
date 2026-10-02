@@ -15,6 +15,18 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { headers: cors });
     if (req.method !== "GET") return out({ error: "metodo" }, 405);
 
+    // Proxy público e somente leitura do MangaDex (busca, capítulos e páginas).
+    const u = new URL(req.url);
+    if (u.pathname.startsWith("/md/")) {
+      const p = u.pathname.slice(3);
+      if (!/^\/(manga|at-home\/server)(\/|$)/.test(p)) return out({ error: "rota" }, 404);
+      const r = await fetch("https://api.mangadex.org" + p + u.search, {
+        headers: { "User-Agent": "ManhwaToons/1.0" },
+        cf: p.startsWith("/at-home") ? {} : { cacheTtl: 120, cacheEverything: true },
+      });
+      return new Response(r.body, { status: r.status, headers: { ...cors, "Content-Type": "application/json" } });
+    }
+
     // Quem é? O Firestore valida o token ao ler users/{uid}.
     const token = (req.headers.get("Authorization") || "").replace(/^Bearer /, "");
     let c;
