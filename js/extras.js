@@ -6,7 +6,7 @@ import {SIGNER_URL} from "./config.js";
 const app=getApp(),auth=getAuth(app),db=getFirestore(app),$$=id=>document.getElementById(id);
 const E=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dia=(n=0)=>new Date(Date.now()-n*864e5).toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"});
-const VER="v14";
+const VER="v15";
 const TIPOS={obras:"Obras que eu escolher",populares:"Obras populares da semana",lidas_dia:"Obras mais lidas do dia",favs_semana:"Mais favoritos da semana",leitores_dia:"Ranking de leitores do dia"};
 let FOTO="";
 const st=document.createElement("style");st.textContent=`#bnr{display:none;margin:0 0 14px}#bnr.on{display:block}
@@ -84,14 +84,14 @@ async function darXP(mk,r,campos,txt){const u=auth.currentUser;if(!u||!r)return;
   try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,"niveis",u.uid),{xp:increment(r),mk,...campos},{merge:true});await b.commit();
     Object.assign(XP,campos);XP.xp+=r;mostrarXP();const L=nivel(XP.xp);toast(L>antes?"Nível "+L+" · "+info(L).reino:"+"+r+" XP · "+txt)}catch(e){}}
 async function carregarXP(u){const s=await getDoc(doc(db,"niveis",u.uid)).catch(()=>null);XP={xp:0,dia:"",n:0,ld:"",...(s&&s.exists()?s.data():{})};mostrarXP();const d=dia();if(XP.ld!==d)await darXP(`x_${d}_${u.uid}`,10,{ld:d},"Login diário")}
-function xpLeitura(o,cl){const u=auth.currentUser;if(!u)return;const d=dia(),n0=XP.dia===d?XP.n:0,r=n0<3?[50,30,20][n0]:n0<10?10:0,mk=`p_${d}_${u.uid}_${o}_${cl}`;if(!r||seen.has(mk))return;seen.add(mk);darXP(mk,r,{dia:d,n:n0+1},"Capítulo lido")}
 
 /* ---------- contagem de leituras e favoritos ---------- */
 const seen=new Set();
 async function marcar(mk,col,obra,extra){const u=auth.currentUser;if(!u||seen.has(mk))return;seen.add(mk);const d=dia();
   try{const b=writeBatch(db);b.set(doc(db,"marcas",mk),{uid:u.uid});b.set(doc(db,col,d+"_"+obra),{dia:d,obraId:obra,n:increment(1),mk},{merge:true});
     if(extra)b.set(doc(db,"leitores",d+"_"+u.uid),{dia:d,uid:u.uid,nome:u.displayName||"Leitor",foto:FOTO,xp:XP.xp,n:increment(1),mk},{merge:true});await b.commit()}catch(e){}}
-const rl0=window.rl;window.rl=async function(){await rl0();const o=WID[S.cur];if(o&&W[S.cur]&&W[S.cur][3]>0&&S.cap>=1){const u=auth.currentUser;if(u){marcar(`l_${dia()}_${u.uid}_${o}_${lb(S.cur,S.cap)}`,"leituras",o,1);xpLeitura(o,lb(S.cur,S.cap))}}};
+addEventListener("capfim",e=>{const u=auth.currentUser,o=WID[e.detail.w];if(!u||!o)return;const cl=lb(e.detail.w,e.detail.c),d=dia(),n0=XP.dia===d?XP.n:0,mk=`p_${d}_${u.uid}_${o}_${cl}`;
+  marcar(`l_${d}_${u.uid}_${o}_${cl}`,"leituras",o,1);if(seen.has(mk))return;seen.add(mk);darXP(mk,n0===0?50:25,{dia:d,n:n0+1},"Capítulo lido")});
 $$("ofv").addEventListener("click",()=>{const u=auth.currentUser,o=WID[S.cur];if(u&&o&&P.fav.indexOf(S.cur)>-1)marcar(`f_${dia()}_${u.uid}_${o}`,"favs",o)});
 
 /* ---------- home: banners e trilhos ---------- */
