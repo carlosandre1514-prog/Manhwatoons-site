@@ -180,7 +180,7 @@ footer button{color:var(--mu)}
 .nc-ch.nc-fa .nc-av{margin-top:8px}
 .nc[data-fx=apex]{border:2px solid #fff3b0;background:radial-gradient(circle at 90% -10%,#fff 0,rgba(255,240,170,.85) 16%,transparent 46%),repeating-conic-gradient(from 150deg at 90% -15%,rgba(255,255,255,.55) 0 3deg,transparent 3deg 9deg),radial-gradient(70px 26px at 12% 108%,#fff,transparent),radial-gradient(90px 30px at 46% 112%,#fff,transparent),radial-gradient(80px 28px at 86% 110%,#fff,transparent),linear-gradient(180deg,#7db8f5,#d6ecff 60%,#fff6d8);box-shadow:0 0 16px #fff,0 0 38px rgba(255,214,102,.7),0 0 70px rgba(150,210,255,.35)}
 .nc[data-fx=apex] .nc-tx{background:linear-gradient(180deg,#0d0700,#2a1803 50%,#0d0700);border:1px solid #ffd76a;border-radius:8px;padding:6px 12px;box-shadow:0 0 10px rgba(255,214,102,.7),inset 0 0 12px rgba(255,214,102,.2)}
-.nc[data-fx=apex] .nc-av{background:radial-gradient(circle at 30% 25%,#fff,#ffe38a 55%,#8a5a00);box-shadow:0 0 0 2px #fff,0 0 18px rgba(255,255,255,.9)}
+.nc[data-fx=apex] .nc-av{box-shadow:0 0 0 2px #fff,0 0 18px rgba(255,255,255,.9)}
 .nc[data-fx=apex] .nc-nm{font-style:italic;background:linear-gradient(90deg,#fff,#ffe38a,#fff,#ffd76a,#fff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 0 5px rgba(255,214,102,.9));animation:ncgl 5s linear infinite}@keyframes ncgl{to{background-position:200% 0}}
 .nc[data-fx=apex] .nc-rk,.nc[data-fx=apex] .nc-lv{color:#ffeebb}.nc[data-fx=apex] .nc-sb i{background:linear-gradient(90deg,#ffd76a,#fff,#ffd76a)}
 .nc[data-fx=apex] .nc-rt{margin:0 6px 0 18px}.nc[data-fx=apex] .nc-nv{background:linear-gradient(135deg,#fff,#ffe38a,#fff);color:#3a2500;border-color:#fff;box-shadow:0 0 14px #fff}
