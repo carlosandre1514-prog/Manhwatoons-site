@@ -9,6 +9,7 @@ const st=document.createElement("style");st.textContent=`
 #chat.on{display:flex;flex-direction:column;min-height:320px}
 #chat .ch-t{margin:4px 0 8px;font-size:22px}
 #chat .ch-l{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:6px 2px 10px;-webkit-overflow-scrolling:touch}
+.ch-r{display:flex;justify-content:flex-start;flex:none}.ch-r.eu{justify-content:flex-end}.ch-r>*{width:86%;max-width:440px}.ch-r.eu>*{border-bottom-right-radius:4px}.ch-r:not(.eu)>*{border-bottom-left-radius:4px}
 .ch-f{display:flex;gap:8px;padding-top:10px;border-top:1px solid #262626}
 .ch-i{flex:1;min-width:0;background:#0e0e0e;border:1px solid #262626;border-radius:999px;color:#f4f4f4;padding:12px 16px;font:inherit;font-size:16px}
 .ch-s{flex:none;border:0;border-radius:999px;background:#00e05c;color:#000;font:inherit;font-weight:800;padding:0 22px;min-height:44px;cursor:pointer}
@@ -38,7 +39,7 @@ function ouvirAviso(){if(unA)return;unA=onSnapshot(query(collection(db,"chat"),w
 function ouvir(){ouvirAviso();if(un)return;
   un=onSnapshot(query(collection(db,"chat"),orderBy("criado","desc"),limit(60)),s=>{const box=$$("chl"),me=auth.currentUser&&auth.currentUser.uid,adm=window.isA&&isA();
     box.innerHTML=s.docs.filter(d=>d.data().tipo!=="aviso").map(d=>{const x=d.data({serverTimestamps:"estimate"}),nm=x.nome||"Leitor",del=(x.uid===me||adm)?d.id:"";
-      return window.XPX&&XPX.msg?XPX.msg(x.xp,nm,x.foto,x.texto,hora(x.criado),del):`<div class="ch-fb"><b>${E(nm)}</b> ${E(x.texto||"")}</div>`}).reverse().join("")||'<p class="ch-v">Nenhuma mensagem ainda. Comece a conversa!</p>';
+      const h=window.XPX&&XPX.msg?XPX.msg(x.xp,nm,x.foto,x.texto,hora(x.criado),del):`<div class="ch-fb"><b>${E(nm)}</b> ${E(x.texto||"")}</div>`;return `<div class="ch-r${me&&x.uid===me?" eu":""}">${h}</div>`}).reverse().join("")||'<p class="ch-v">Nenhuma mensagem ainda. Comece a conversa!</p>';
     box.scrollTop=box.scrollHeight},()=>{$$("che").textContent="Não foi possível carregar o chat."})}
 new MutationObserver(()=>{const on=sec.classList.contains("on");document.body.classList.toggle("chatting",on);if(on){scrollTo(0,0);fit();ouvir()}else{document.body.classList.remove("kb");if(un){un();un=null}if(unA){unA();unA=null}}}).observe(sec,{attributes:true,attributeFilter:["class"]});
 onAuthStateChanged(auth,async u=>{$$("chi").placeholder=u?"Escreva uma mensagem…":"Entre para participar do chat";foto="";
